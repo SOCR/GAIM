@@ -25,16 +25,16 @@ models of varying complexities with 1-100 billion parameters.
 Applications
 ============
 
-The SOCR GAIM model is used to support the [https://rcompute.nursing.umich.edu/SOCR_AI_Bot/](SOCR AI Bot), [https://gray-rain.com/](GR Virtual-Hospital), and many other
-[https://socr.umich.edu/HTML5/](SOCR Applications).
+The SOCR GAIM model is used to support the [SOCR AI Bot](https://rcompute.nursing.umich.edu/SOCR_AI_Bot/), [GR Virtual-Hospital](https://gray-rain.com/), and many other
+[SOCR Applications](https://socr.umich.edu/HTML5/).
 
 
 References
 ==========
 
-* [https://grayrain.org](https://www.grayrain.org)
-* [https://socr.umich.edu](https://SOCR.umich.edu)
-* [https://rcompute.nursing.umich.edu/SOCR_AI_Bot/](SOCR AI Bot)
+* [GrayRain](https://www.grayrain.org)
+* [SOCR](https://SOCR.umich.edu)
+* [SOCR AI Bot]([https://rcompute.nursing.umich.edu/SOCR_AI_Bot/)
 
 <!-- http://www.gray-rain.com
 				http://www.gray-rain.org
