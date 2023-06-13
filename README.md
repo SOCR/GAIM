@@ -1,7 +1,7 @@
 # GAIM
 **SOCR Generative Artificial Intelligence Model (GAIM)**
 
-<a href="https://GAIM.world"><img align="right" width="400" src="[https://raw.githubusercontent.com/SOCR/GrayRain/master/html/GrayRain_VH_Snap.png](https://github.com/SOCR/GAIM/blob/e395daf735cece02937ee8584dce28b82b8bf945/source/GAIM_Pic1.png)"></a>
+<a href="https://GAIM.world"><img align="right" width="400" src="https://github.com/SOCR/GAIM/blob/e395daf735cece02937ee8584dce28b82b8bf945/source/GAIM_Pic1.png"></a>
 
 Table of contents
 =================
