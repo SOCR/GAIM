@@ -34,7 +34,7 @@ References
 
 * [GrayRain](https://www.grayrain.org)
 * [SOCR](https://SOCR.umich.edu)
-* [SOCR AI Bot]([https://rcompute.nursing.umich.edu/SOCR_AI_Bot/)
+* [SOCR AI Bot](https://rcompute.nursing.umich.edu/SOCR_AI_Bot/)
 
 <!-- http://www.gray-rain.com
 				http://www.gray-rain.org
@@ -45,4 +45,4 @@ References
 Contact
 =======
 
-[https://www.socr.umich.edu/people/](SOCR Team)
+[SOCR Team](https://www.socr.umich.edu/people/)
