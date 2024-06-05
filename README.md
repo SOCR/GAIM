@@ -19,7 +19,8 @@ Overview
 ========
 
 The SOCR generative artificial intelligence model (GAIM) is based on transfer learning, transformers, and deep neural networks. It includes different
-models of varying complexities with 1-100 billion parameters.
+models of varying complexities with 1-100 billion parameters. The [DSPA GAIM Appendix](https://socr.umich.edu/DSPA2/DSPA2_notes/DSPA_Appendix_11_Foundational_Generative_AI_Models_GAIMs.html)
+in the [SOCR DSPA Book](https://dspa2.predictive.space/) provide additional information, details, and experimental examples.
 
 
 Applications
