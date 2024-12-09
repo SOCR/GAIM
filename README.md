@@ -26,7 +26,7 @@ in the [SOCR DSPA Book](https://dspa2.predictive.space/) provide additional info
 Applications
 ============
 
-The SOCR GAIM model is used to support the [SOCR AI Bot](https://rcompute.nursing.umich.edu/SOCR_AI_Bot/), [GR Virtual-Hospital](https://gray-rain.com/), and many other
+The [SOCR GAIM model](https://socr.umich.edu/GAIM/) is used to support the [SOCR AI Bot](https://rcompute.nursing.umich.edu/SOCR_AI_Bot/), [GR Virtual-Hospital](https://gray-rain.com/), and many other
 [SOCR Applications](https://socr.umich.edu/HTML5/).
 
 * [SOCR GAIM Demos (3-min) video](https://drive.google.com/drive/folders/17OA0QqQhJ_sHNu1SPsY2Ofu4M2lQuzkR)
@@ -39,6 +39,7 @@ References
 ==========
 
 * [GAIM.world](https://GAIM.world)
+* [SOCR GAIM model](https://socr.umich.edu/GAIM/)
 * [GrayRain](https://www.grayrain.org)
 * [SOCR](https://SOCR.umich.edu)
 * [SOCR AI Bot](https://rcompute.nursing.umich.edu/SOCR_AI_Bot/)
