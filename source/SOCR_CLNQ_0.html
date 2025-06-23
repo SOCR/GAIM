@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOCR CLNQ: Clinical Decision Support System</title>
+    <link rel="icon" type="image/png" href="SOCR_Logo.png">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for icons */
+        .lucide { width: 1rem; height: 1rem; stroke: currentColor; stroke-width: 2; fill: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+<script type="text/babel">
+        // Lucide Icons (simplified versions) - ONLY THESE, NO IMPORTS
+        const AlertCircle = () => <svg className="lucide"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+        const Activity = () => <svg className="lucide"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>;
+        const TrendingUp = () => <svg className="lucide"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/><polyline points="17,6 23,6 23,12"/></svg>;
+        const DollarSign = () => <svg className="lucide"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
+        const Brain = () => <svg className="lucide"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>;
+        const Zap = () => <svg className="lucide"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>;
+        const Download = () => <svg className="lucide"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+        const Play = () => <svg className="lucide"><polygon points="5,3 19,12 5,21"/></svg>;
+        const Pause = () => <svg className="lucide"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>;
+        const Eye = () => <svg className="lucide"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const Heart = () => <svg className="lucide"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+        const Users = () => <svg className="lucide"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+        const Clock = () => <svg className="lucide"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>;
+        const Thermometer = () => <svg className="lucide"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>;
+
+        // Enhanced Biomedical Knowledge Base with comprehensive treatment pathways
+        const enhancedBiomedicalKnowledge = {
+          symptoms: {
+            'headache': {
+              conditions: ['migraine', 'tension_headache', 'cluster_headache', 'sinusitis', 'hypertension', 'sleep_apnea', 'medication_overuse_headache'],
+              severity: 0.7,
+              frequency: 0.8,
+              hpoTerms: ['HP:0002315']
+            },
+            'chills': {
+              conditions: ['viral_infection', 'bacterial_infection', 'hypothermia', 'hypoglycemia', 'anxiety', 'medication_withdrawal', 'sepsis'],
+              severity: 0.6,
+              frequency: 0.5,
+              hpoTerms: ['HP:0025143']
+            },
+            'morning_symptoms': {
+              conditions: ['sleep_apnea', 'hypoglycemia', 'dehydration', 'caffeine_withdrawal', 'depression', 'adrenal_insufficiency'],
+              severity: 0.5,
+              frequency: 0.4,
+              hpoTerms: ['HP:0030050']
+            },
+            'fatigue': {
+              conditions: ['anemia', 'thyroid_dysfunction', 'sleep_disorders', 'chronic_fatigue_syndrome', 'depression'],
+              severity: 0.6,
+              frequency: 0.7,
+              hpoTerms: ['HP:0012378']
+            },
+            'nausea': {
+              conditions: ['gastroenteritis', 'migraine', 'pregnancy', 'medication_side_effect', 'inner_ear_disorder'],
+              severity: 0.5,
+              frequency: 0.6,
+              hpoTerms: ['HP:0002018']
+            },
+            'fever': {
+              conditions: ['viral_infection', 'bacterial_infection', 'autoimmune_disease', 'malignancy'],
+              severity: 0.8,
+              frequency: 0.9,
+              hpoTerms: ['HP:0001945']
+            }
+          },
+          
+          conditions: {
+            'migraine': {
+              treatments: ['sumatriptan', 'preventive_medications', 'lifestyle_changes', 'botox_injections', 'cgrp_inhibitors'],
+              successRate: 0.75,
+              baseCost: 2500,
+              prognosis: 'Good with proper management and trigger avoidance',
+              severity: 'moderate_to_severe',
+              chronicityRisk: 0.3
+            },
+            'tension_headache': {
+              treatments: ['nsaids', 'stress_management', 'physical_therapy', 'relaxation_techniques', 'trigger_point_therapy'],
+              successRate: 0.85,
+              baseCost: 800,
+              prognosis: 'Excellent with lifestyle modifications and stress management',
+              severity: 'mild_to_moderate',
+              chronicityRisk: 0.15
+            },
+            'cluster_headache': {
+              treatments: ['oxygen_therapy', 'sumatriptan_injection', 'verapamil', 'steroid_bridge', 'deep_brain_stimulation'],
+              successRate: 0.70,
+              baseCost: 5000,
+              prognosis: 'Variable; often cyclical with remission periods',
+              severity: 'severe',
+              chronicityRisk: 0.4
+            },
+            'sleep_apnea': {
+              treatments: ['cpap_therapy', 'weight_loss', 'positional_therapy', 'oral_appliances', 'surgery'],
+              successRate: 0.80,
+              baseCost: 4000,
+              prognosis: 'Very good with CPAP compliance and lifestyle changes',
+              severity: 'moderate',
+              chronicityRisk: 0.2
+            },
+            'viral_infection': {
+              treatments: ['supportive_care', 'antivirals', 'symptom_management', 'rest_hydration', 'immune_support'],
+              successRate: 0.90,
+              baseCost: 300,
+              prognosis: 'Excellent; typically self-limiting within 7-14 days',
+              severity: 'mild_to_moderate',
+              chronicityRisk: 0.05
+            },
+            'bacterial_infection': {
+              treatments: ['antibiotics', 'supportive_care', 'hospitalization', 'iv_therapy', 'infection_control'],
+              successRate: 0.92,
+              baseCost: 1500,
+              prognosis: 'Excellent with appropriate antibiotic therapy',
+              severity: 'moderate_to_severe',
+              chronicityRisk: 0.1
+            },
+            'hypertension': {
+              treatments: ['ace_inhibitors', 'lifestyle_modifications', 'diuretics', 'calcium_channel_blockers', 'monitoring'],
+              successRate: 0.85,
+              baseCost: 2000,
+              prognosis: 'Good with medication compliance and lifestyle changes',
+              severity: 'moderate',
+              chronicityRisk: 0.8
+            }
+          },
+          
+          treatments: {
+            'sumatriptan': { 
+              efficacy: 0.75, 
+              monetaryCost: 150, 
+              painLevel: 2, 
+              emotionalStress: 1, 
+              socialImpact: 0, 
+              timeCommitment: 1,
+              sideEffects: 0.3,
+              contraindications: ['cardiovascular_disease', 'uncontrolled_hypertension']
+            },
+            'nsaids': { 
+              efficacy: 0.70, 
+              monetaryCost: 20, 
+              painLevel: 0, 
+              emotionalStress: 0, 
+              socialImpact: 0, 
+              timeCommitment: 0,
+              sideEffects: 0.2,
+              contraindications: ['peptic_ulcer', 'kidney_disease']
+            },
+            'cpap_therapy': { 
+              efficacy: 0.85, 
+              monetaryCost: 3000, 
+              painLevel: 1, 
+              emotionalStress: 3, 
+              socialImpact: 2, 
+              timeCommitment: 4,
+              sideEffects: 0.1,
+              contraindications: ['claustrophobia', 'severe_nasal_obstruction']
+            },
+            'oxygen_therapy': {
+              efficacy: 0.80,
+              monetaryCost: 500,
+              painLevel: 0,
+              emotionalStress: 2,
+              socialImpact: 1,
+              timeCommitment: 2,
+              sideEffects: 0.05,
+              contraindications: ['fire_hazard_environment']
+            },
+            'antibiotics': { 
+              efficacy: 0.90, 
+              monetaryCost: 50, 
+              painLevel: 0, 
+              emotionalStress: 1, 
+              socialImpact: 0, 
+              timeCommitment: 1,
+              sideEffects: 0.25,
+              contraindications: ['severe_allergies']
+            },
+            'lifestyle_changes': {
+              efficacy: 0.65,
+              monetaryCost: 200,
+              painLevel: 1,
+              emotionalStress: 2,
+              socialImpact: 1,
+              timeCommitment: 5,
+              sideEffects: 0.05,
+              contraindications: []
+            },
+            'botox_injections': {
+              efficacy: 0.60,
+              monetaryCost: 1200,
+              painLevel: 3,
+              emotionalStress: 2,
+              socialImpact: 1,
+              timeCommitment: 2,
+              sideEffects: 0.15,
+              contraindications: ['myasthenia_gravis', 'pregnancy']
+            },
+            'deep_brain_stimulation': {
+              efficacy: 0.75,
+              monetaryCost: 50000,
+              painLevel: 7,
+              emotionalStress: 8,
+              socialImpact: 4,
+              timeCommitment: 8,
+              sideEffects: 0.4,
+              contraindications: ['coagulopathy', 'active_infection']
+            }
+          }
+        };
+
+        // Advanced NLP Processing
+        const advancedNLPProcessor = {
+          symptomPatterns: {
+            'headache': ['headache', 'head pain', 'cephalgia', 'migraine', 'head ache'],
+            'chills': ['chill', 'chills', 'shiver', 'shivering', 'cold', 'rigors'],
+            'fatigue': ['tired', 'fatigue', 'exhausted', 'weak', 'weakness', 'energy'],
+            'nausea': ['nausea', 'nauseous', 'sick', 'queasy', 'stomach'],
+            'fever': ['fever', 'hot', 'temperature', 'pyrexia', 'feverish'],
+            'morning_symptoms': ['morning', 'wake up', 'dawn', 'early', 'am']
+          },
+          
+          severityPatterns: {
+            'mild': ['mild', 'slight', 'minor', 'little', 'barely'],
+            'moderate': ['moderate', 'medium', 'average', 'noticeable'],
+            'severe': ['severe', 'intense', 'extreme', 'terrible', 'unbearable', 'excruciating']
+          },
+          
+          temporalPatterns: {
+            'acute': ['sudden', 'sudden onset', 'acute', 'immediately'],
+            'chronic': ['chronic', 'ongoing', 'persistent', 'constant', 'always'],
+            'intermittent': ['sometimes', 'occasionally', 'intermittent', 'comes and goes']
+          },
+          
+          frequencyPatterns: {
+            'rare': ['rarely', 'seldom', 'infrequent'],
+            'occasional': ['sometimes', 'occasionally', 'now and then'],
+            'frequent': ['often', 'frequently', 'regular', 'recurring'],
+            'constant': ['always', 'constant', 'continuous', 'all the time']
+          }
+        };
+
+        // Enhanced symptom parsing with NLP
+        const parseSymptoms = (text) => {
+          const lowerText = text.toLowerCase();
+          const extractedSymptoms = [];
+          const severity = {};
+          const temporal = {};
+          const frequency = {};
+          
+          // Extract symptoms
+          Object.entries(advancedNLPProcessor.symptomPatterns).forEach(([symptom, patterns]) => {
+            if (patterns.some(pattern => lowerText.includes(pattern))) {
+              extractedSymptoms.push(symptom);
+              
+              // Extract severity
+              Object.entries(advancedNLPProcessor.severityPatterns).forEach(([level, severityPatterns]) => {
+                if (severityPatterns.some(pattern => lowerText.includes(pattern))) {
+                  severity[symptom] = level;
+                }
+              });
+              
+              // Extract temporal patterns
+              Object.entries(advancedNLPProcessor.temporalPatterns).forEach(([pattern, temporalPatterns]) => {
+                if (temporalPatterns.some(tp => lowerText.includes(tp))) {
+                  temporal[symptom] = pattern;
+                }
+              });
+              
+              // Extract frequency
+              Object.entries(advancedNLPProcessor.frequencyPatterns).forEach(([freq, freqPatterns]) => {
+                if (freqPatterns.some(fp => lowerText.includes(fp))) {
+                  frequency[symptom] = freq;
+                }
+              });
+            }
+          });
+          
+          return {
+            symptoms: extractedSymptoms,
+            severity,
+            temporal,
+            frequency
+          };
+        };
+
+        // Enhanced cost calculation including non-monetary factors
+        const calculateComprehensiveCost = (treatment) => {
+          const treatmentData = enhancedBiomedicalKnowledge.treatments[treatment];
+          if (!treatmentData) return { monetary: 1000, total: 1000 };
+          
+          // Weight factors for different cost components
+          const weights = {
+            monetary: 1.0,
+            pain: 200,        // $200 equivalent per pain unit
+            emotional: 150,   // $150 equivalent per emotional stress unit
+            social: 100,      // $100 equivalent per social impact unit
+            time: 50          // $50 equivalent per time commitment unit
+          };
+          
+          const totalCost = 
+            (treatmentData.monetaryCost * weights.monetary) +
+            (treatmentData.painLevel * weights.pain) +
+            (treatmentData.emotionalStress * weights.emotional) +
+            (treatmentData.socialImpact * weights.social) +
+            (treatmentData.timeCommitment * weights.time);
+            
+          return {
+            monetary: treatmentData.monetaryCost,
+            pain: treatmentData.painLevel,
+            emotional: treatmentData.emotionalStress,
+            social: treatmentData.socialImpact,
+            time: treatmentData.timeCommitment,
+            total: totalCost
+          };
+        };
+
+        // Statistics calculation helper
+        const calculateStatistics = (values) => {
+          if (values.length === 0) return { mean: 0, se: 0 };
+          const mean = values.reduce((a, b) => a + b, 0) / values.length;
+          const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
+          const standardError = Math.sqrt(variance / values.length);
+          return { mean, se: standardError };
+        };
+
+        // Enhanced simulation with comprehensive factors
+        const runEnhancedSimulations = (condition, treatment, numSimulations = 20) => {
+          const successValues = [];
+          const costValues = [];
+          const costBreakdown = {
+            monetary: [],
+            pain: [],
+            emotional: [],
+            social: [],
+            time: []
+          };
+          
+          const baseData = enhancedBiomedicalKnowledge.conditions[condition];
+          const treatmentData = enhancedBiomedicalKnowledge.treatments[treatment];
+          
+          if (!baseData || !treatmentData) {
+            return {
+              success: { mean: 0.5, se: 0.1 },
+              cost: { mean: 1000, se: 200 },
+              costBreakdown: {}
+            };
+          }
+          
+          for (let i = 0; i < numSimulations; i++) {
+            // Environmental and patient-specific variation
+            const envFactor = 1 + (Math.random() - 0.5) * 0.3;
+            const patientFactor = 1 + (Math.random() - 0.5) * 0.25;
+            const quantumNoise = (Math.random() - 0.5) * 0.1;
+            
+            // Success calculation with multiple factors
+            const baseSuccess = treatmentData.efficacy * baseData.successRate;
+            const adjustedSuccess = Math.max(0, Math.min(1, 
+              baseSuccess * envFactor * patientFactor + quantumNoise
+            ));
+            successValues.push(adjustedSuccess);
+            
+            // Comprehensive cost calculation
+            const costData = calculateComprehensiveCost(treatment);
+            const totalCostVariation = costData.total * (1 + (Math.random() - 0.5) * 0.4);
+            costValues.push(Math.max(0, totalCostVariation));
+            
+            // Track cost components
+            costBreakdown.monetary.push(costData.monetary * (1 + (Math.random() - 0.5) * 0.2));
+            costBreakdown.pain.push(costData.pain * (1 + (Math.random() - 0.5) * 0.3));
+            costBreakdown.emotional.push(costData.emotional * (1 + (Math.random() - 0.5) * 0.35));
+            costBreakdown.social.push(costData.social * (1 + (Math.random() - 0.5) * 0.25));
+            costBreakdown.time.push(costData.time * (1 + (Math.random() - 0.5) * 0.2));
+          }
+          
+          return {
+            success: calculateStatistics(successValues),
+            cost: calculateStatistics(costValues),
+            costBreakdown: {
+              monetary: calculateStatistics(costBreakdown.monetary),
+              pain: calculateStatistics(costBreakdown.pain),
+              emotional: calculateStatistics(costBreakdown.emotional),
+              social: calculateStatistics(costBreakdown.social),
+              time: calculateStatistics(costBreakdown.time)
+            }
+          };
+        };
+
+        // Enhanced Alluvial Flow Visualization Component with Quantitative Outcomes
+        const AlluvialFlow = ({ workflow, onNodeClick, selectedPath }) => {
+          const canvasRef = React.useRef(null);
+          const [hoveredNode, setHoveredNode] = React.useState(null);
+          const [nodePositions, setNodePositions] = React.useState(new Map());
+          
+          React.useEffect(() => {
+            if (!workflow || !canvasRef.current) return;
+            
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const positions = new Map();
+            
+            // Enhanced drawing function with statistics
+            const drawAlluvialFlow = (node, x, y, level) => {
+              const nodeWidth = 140;
+              const nodeHeight = node.type === 'outcome' && node.enhancedStatistics ? 80 : 50;
+              const levelSpacing = 220;
+              
+              // Store node position for click detection
+              positions.set(node.id, { x, y, width: nodeWidth, height: nodeHeight, node });
+              
+              // Node colors with enhanced outcome styling
+              const colors = {
+                symptom: '#3B82F6',
+                diagnosis: '#10B981',
+                treatment: '#8B5CF6',
+                outcome: '#F59E0B'
+              };
+              
+              // Draw node background
+              ctx.fillStyle = colors[node.type] || '#6B7280';
+              ctx.fillRect(x, y, nodeWidth, nodeHeight);
+              
+              // Add border for outcome nodes with statistics
+              if (node.type === 'outcome' && node.enhancedStatistics) {
+                ctx.strokeStyle = '#DC2626';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, nodeWidth, nodeHeight);
+              }
+              
+              // Draw main title
+              ctx.fillStyle = 'white';
+              ctx.font = 'bold 11px Arial';
+              ctx.textAlign = 'center';
+              const title = node.title.substring(0, 12) + (node.title.length > 12 ? '...' : '');
+              ctx.fillText(title, x + nodeWidth / 2, y + 15);
+              
+              // Draw statistics for outcome nodes
+              if (node.type === 'outcome' && node.enhancedStatistics) {
+                ctx.font = '9px Arial';
+                
+                // Success rate
+                const successText = `Success: ${node.enhancedStatistics.success && typeof node.enhancedStatistics.success.mean === 'number' ? 
+                  node.enhancedStatistics.success.mean.toFixed(2) : '0.00'}`;
+                ctx.fillText(successText, x + nodeWidth / 2, y + 30);
+                
+                // Total cost
+                const costText = `Cost: $${node.enhancedStatistics.cost && typeof node.enhancedStatistics.cost.mean === 'number' ? 
+                  Math.round(node.enhancedStatistics.cost.mean) : '0'}`;
+                ctx.fillText(costText, x + nodeWidth / 2, y + 45);
+                
+                // Cost breakdown indicators
+                if (node.enhancedStatistics.costBreakdown) {
+                  ctx.font = '7px Arial';
+                  const indicators = [];
+                  if (node.enhancedStatistics.costBreakdown.pain?.mean > 0) indicators.push('Pain');
+                  if (node.enhancedStatistics.costBreakdown.emotional?.mean > 0) indicators.push('Emot');
+                  if (node.enhancedStatistics.costBreakdown.social?.mean > 0) indicators.push('Soc');
+                  if (node.enhancedStatistics.costBreakdown.time?.mean > 2) indicators.push('Time');
+                  
+                  ctx.fillText(indicators.join(' '), x + nodeWidth / 2, y + 60);
+                }
+              }
+              
+              // Draw connections to children
+              if (node.children && node.children.length > 0) {
+                const childSpacing = Math.max(60, 300 / node.children.length);
+                
+                node.children.forEach((child, index) => {
+                  const childX = x + levelSpacing;
+                  const targetY = y + (index * childSpacing) - ((node.children.length - 1) * childSpacing / 2);
+                  
+                  // Enhanced connection styling based on success rate
+                  let connectionOpacity = '60';
+                  if (child.enhancedStatistics?.success?.mean) {
+                    connectionOpacity = Math.round(child.enhancedStatistics.success.mean * 100).toString(16).padStart(2, '0');
+                  }
+                  
+                  ctx.strokeStyle = colors[node.type] + connectionOpacity;
+                  ctx.lineWidth = child.enhancedStatistics?.success?.mean ? 
+                    2 + (child.enhancedStatistics.success.mean * 4) : 3;
+                  
+                  ctx.beginPath();
+                  ctx.moveTo(x + nodeWidth, y + nodeHeight / 2);
+                  ctx.bezierCurveTo(
+                    x + nodeWidth + 60, y + nodeHeight / 2,
+                    childX - 60, targetY + nodeHeight / 2,
+                    childX, targetY + nodeHeight / 2
+                  );
+                  ctx.stroke();
+                  
+                  // Recursively draw children
+                  drawAlluvialFlow(child, childX, targetY, level + 1);
+                });
+              }
+            };
+            
+            if (workflow) {
+              drawAlluvialFlow(workflow, 20, 50, 0);
+            }
+            
+            setNodePositions(positions);
+          }, [workflow, selectedPath]);
+          
+          const handleCanvasClick = (e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * 2; // Account for scaling
+            const y = (e.clientY - rect.top) * 2;
+            
+            // Check if click is within any node
+            for (const [nodeId, pos] of nodePositions) {
+              if (x >= pos.x && x <= pos.x + pos.width && 
+                  y >= pos.y && y <= pos.y + pos.height) {
+                setHoveredNode(pos.node);
+                if (onNodeClick) onNodeClick(pos.node);
+                break;
+              }
+            }
+          };
+          
+          return (
+            <div className="relative">
+              <canvas
+                ref={canvasRef}
+                className="w-full h-96 border border-gray-300 rounded-lg bg-white cursor-pointer"
+                onClick={handleCanvasClick}
+              />
+              
+              {/* Tooltip for hovered node */}
+              {hoveredNode && hoveredNode.enhancedStatistics && (
+                <div className="absolute top-4 right-4 bg-white p-3 rounded-lg shadow-lg border max-w-xs">
+                  <h4 className="font-semibold text-sm mb-2">{hoveredNode.title}</h4>
+                  <div className="text-xs space-y-1">
+                    <div>Success: {hoveredNode.enhancedStatistics.success?.mean?.toFixed(3) || '0.000'} ± {hoveredNode.enhancedStatistics.success?.se?.toFixed(3) || '0.000'}</div>
+                    <div>Total Cost: ${Math.round(hoveredNode.enhancedStatistics.cost?.mean || 0)} ± ${Math.round(hoveredNode.enhancedStatistics.cost?.se || 0)}</div>
+                    {hoveredNode.enhancedStatistics.costBreakdown && (
+                      <div className="border-t pt-1 mt-1">
+                        <div className="font-medium">Cost Breakdown:</div>
+                        {Object.entries(hoveredNode.enhancedStatistics.costBreakdown).map(([type, stats]) => (
+                         <div key={type} className="flex justify-between">
+                           <span className="capitalize">{type}:</span>
+                           <span>{stats?.mean?.toFixed(1) || '0.0'}</span>
+                         </div>
+                       ))}
+                     </div>
+                   )}
+                 </div>
+               </div>
+             )}
+           </div>
+         );
+       };
+
+       // Enhanced Workflow Node with comprehensive cost breakdown
+       const EnhancedWorkflowNode = ({ node, level, onExpand, isExpanded }) => {
+         const getNodeColor = (type) => {
+           switch (type) {
+             case 'symptom': return 'bg-blue-100 border-blue-300';
+             case 'diagnosis': return 'bg-green-100 border-green-300';
+             case 'treatment': return 'bg-purple-100 border-purple-300';
+             case 'outcome': return 'bg-orange-100 border-orange-300';
+             default: return 'bg-gray-100 border-gray-300';
+           }
+         };
+
+         const getIcon = (type) => {
+           switch (type) {
+             case 'symptom': return <AlertCircle className="w-4 h-4" />;
+             case 'diagnosis': return <Brain className="w-4 h-4" />;
+             case 'treatment': return <Activity className="w-4 h-4" />;
+             case 'outcome': return <TrendingUp className="w-4 h-4" />;
+             default: return <Zap className="w-4 h-4" />;
+           }
+         };
+
+         const costIcons = {
+           monetary: <DollarSign className="w-3 h-3" />,
+           pain: <Thermometer className="w-3 h-3" />,
+           emotional: <Heart className="w-3 h-3" />,
+           social: <Users className="w-3 h-3" />,
+           time: <Clock className="w-3 h-3" />
+         };
+
+         return (
+           <div className={`p-3 rounded-lg border-2 ${getNodeColor(node.type)} mb-2 cursor-pointer transition-all hover:shadow-md`}
+                onClick={() => onExpand(node.id)}
+                style={{ marginLeft: `${level * 20}px` }}>
+             <div className="flex items-center gap-2">
+               {getIcon(node.type)}
+               <span className="font-medium">{node.title}</span>
+               {node.children && node.children.length > 0 && (
+                 <span className="text-xs bg-white px-2 py-1 rounded-full">
+                   {isExpanded ? '−' : '+'}
+                 </span>
+               )}
+             </div>
+             
+             {node.description && (
+               <p className="text-sm text-gray-600 mt-1">{node.description}</p>
+             )}
+             
+             {node.enhancedStatistics && (
+               <div className="mt-3 space-y-2">
+                 <div className="bg-white p-2 rounded border">
+                   <div className="flex items-center gap-1 text-sm font-medium text-green-600">
+                     <TrendingUp className="w-3 h-3" />
+                     Success: {node.enhancedStatistics.success && typeof node.enhancedStatistics.success.mean === 'number' ? 
+                       node.enhancedStatistics.success.mean.toFixed(3) : '0.000'} ± {
+                       node.enhancedStatistics.success && typeof node.enhancedStatistics.success.se === 'number' ? 
+                       node.enhancedStatistics.success.se.toFixed(3) : '0.000'}
+                   </div>
+                 </div>
+                 
+                 <div className="bg-white p-2 rounded border">
+                   <div className="text-xs font-medium text-gray-700 mb-1">Comprehensive Costs</div>
+                   <div className="grid grid-cols-2 gap-1 text-xs">
+                     {node.enhancedStatistics.costBreakdown && Object.entries(node.enhancedStatistics.costBreakdown).map(([type, stats]) => (
+                       <div key={`cost-${type}`} className="flex items-center gap-1">
+                         {costIcons[type]}
+                         <span className="capitalize">{String(type)}:</span>
+                         <span>{stats && typeof stats.mean === 'number' ? stats.mean.toFixed(1) : '0.0'} ± {stats && typeof stats.se === 'number' ? stats.se.toFixed(1) : '0.0'}</span>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               </div>
+             )}
+             
+             {node.metadata && (
+               <div className="mt-2 text-xs text-gray-500">
+                 <div>Severity: {String(node.metadata.severity || 'Unknown')}</div>
+                 <div>Chronicity Risk: {node.metadata.chronicityRisk ? `${(node.metadata.chronicityRisk * 100).toFixed(0)}%` : 'N/A'}</div>
+               </div>
+             )}
+           </div>
+         );
+       };
+
+       // Enhanced workflow generation with comprehensive pathways
+       const generateEnhancedWorkflow = (analysisResult) => {
+         const { symptoms, severity, temporal, frequency } = analysisResult;
+         let nodeId = 0;
+         
+         // Root node with enhanced symptom analysis
+         const rootNode = {
+           id: nodeId++,
+           type: 'symptom',
+           title: 'Symptom Complex',
+           description: `${symptoms.join(', ')} with ${Object.entries(severity).map(([s, sev]) => `${s}: ${sev}`).join(', ')}`,
+           children: [],
+           metadata: { severity, temporal, frequency }
+         };
+         
+         // Get all potential conditions with confidence scoring
+         const conditionScores = new Map();
+         
+         symptoms.forEach(symptom => {
+           if (enhancedBiomedicalKnowledge.symptoms[symptom]) {
+             enhancedBiomedicalKnowledge.symptoms[symptom].conditions.forEach(condition => {
+               const currentScore = conditionScores.get(condition) || 0;
+               const symptomWeight = enhancedBiomedicalKnowledge.symptoms[symptom].frequency;
+               conditionScores.set(condition, currentScore + symptomWeight);
+             });
+           }
+         });
+         
+         // Sort conditions by likelihood and take top 5
+         const topConditions = Array.from(conditionScores.entries())
+           .sort(([,a], [,b]) => b - a)
+           .slice(0, 5)
+           .map(([condition]) => condition);
+         
+         // Create comprehensive diagnostic nodes
+         topConditions.forEach(condition => {
+           const conditionData = enhancedBiomedicalKnowledge.conditions[condition];
+           if (!conditionData) return; // Skip if no data available
+           
+           const diagnosisNode = {
+             id: nodeId++,
+             type: 'diagnosis',
+             title: condition.replace(/_/g, ' ').toUpperCase(),
+             description: `${conditionData.prognosis}`,
+             children: [],
+             metadata: {
+               severity: conditionData.severity,
+               chronicityRisk: conditionData.chronicityRisk,
+               confidence: conditionScores.get(condition) / symptoms.length
+             }
+           };
+           
+           // Create treatment nodes for each available treatment
+           if (conditionData.treatments && conditionData.treatments.length > 0) {
+             conditionData.treatments.forEach(treatment => {
+               const treatmentData = enhancedBiomedicalKnowledge.treatments[treatment];
+               if (!treatmentData) return; // Skip if no treatment data
+               
+               const treatmentNode = {
+                 id: nodeId++,
+                 type: 'treatment',
+                 title: treatment.replace(/_/g, ' ').toUpperCase(),
+                 description: `${treatmentData.contraindications.length > 0 ? 
+                   'Contraindications: ' + treatmentData.contraindications.join(', ') : 
+                   'Standard treatment protocol'}`,
+                 children: [],
+                 metadata: {
+                   efficacy: treatmentData.efficacy,
+                   sideEffects: treatmentData.sideEffects,
+                   contraindications: treatmentData.contraindications
+                 }
+               };
+               
+               // Create outcome node with enhanced statistics
+               const enhancedStats = runEnhancedSimulations(condition, treatment);
+               const outcomeNode = {
+                 id: nodeId++,
+                 type: 'outcome',
+                 title: 'Expected Outcome',
+                 description: `${conditionData.prognosis}. Side effect probability: ${(treatmentData.sideEffects * 100).toFixed(1)}%`,
+                 enhancedStatistics: enhancedStats,
+                 metadata: {
+                   severity: conditionData.severity,
+                   chronicityRisk: conditionData.chronicityRisk,
+                   expectedDuration: temporal[symptoms[0]] === 'chronic' ? 'Long-term' : 'Short-term'
+                 }
+               };
+               
+               treatmentNode.children.push(outcomeNode);
+               diagnosisNode.children.push(treatmentNode);
+             });
+           }
+           
+           rootNode.children.push(diagnosisNode);
+         });
+         
+         return rootNode;
+       };
+
+       // Main Application Component
+       const EnhancedClinicalDecisionApp = () => {
+         const [userInput, setUserInput] = React.useState('');
+         const [workflow, setWorkflow] = React.useState(null);
+         const [expandedNodes, setExpandedNodes] = React.useState(new Set());
+         const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+         const [analysisProgress, setAnalysisProgress] = React.useState(0);
+         const [nlpResults, setNlpResults] = React.useState(null);
+         const [selectedPath, setSelectedPath] = React.useState(null);
+         const [viewMode, setViewMode] = React.useState('tree'); // 'tree' or 'alluvial'
+
+         const handleAnalyze = async () => {
+           setIsAnalyzing(true);
+           setAnalysisProgress(0);
+           
+           // Simulate enhanced analysis with progress steps
+           const steps = [
+             'Parsing natural language input...',
+             'Extracting symptoms and modifiers...',
+             'Consulting biomedical knowledge base...',
+             'Cross-referencing HPO ontology...',
+             'Generating diagnostic hypotheses...',
+             'Running Monte Carlo simulations...',
+             'Calculating comprehensive costs...',
+             'Building decision pathways...'
+           ];
+           
+           for (let i = 0; i < steps.length; i++) {
+             setAnalysisProgress((i / steps.length) * 100);
+             await new Promise(resolve => setTimeout(resolve, 500));
+           }
+           
+           // Perform enhanced NLP analysis
+           const analysisResult = parseSymptoms(userInput);
+           setNlpResults(analysisResult);
+           
+           // Generate enhanced workflow
+           const generatedWorkflow = generateEnhancedWorkflow(analysisResult);
+           setWorkflow(generatedWorkflow);
+           setExpandedNodes(new Set([generatedWorkflow.id]));
+           setIsAnalyzing(false);
+         };
+
+         const toggleNodeExpansion = (nodeId) => {
+           const newExpanded = new Set(expandedNodes);
+           if (newExpanded.has(nodeId)) {
+             newExpanded.delete(nodeId);
+           } else {
+             newExpanded.add(nodeId);
+           }
+           setExpandedNodes(newExpanded);
+         };
+
+         const renderWorkflowTree = (node, level = 0) => {
+           if (!node) return null;
+           
+           const isExpanded = expandedNodes.has(node.id);
+           
+           return (
+             <div key={node.id}>
+               <EnhancedWorkflowNode 
+                 node={node} 
+                 level={level} 
+                 onExpand={toggleNodeExpansion}
+                 isExpanded={isExpanded}
+               />
+               {isExpanded && node.children && node.children.map(child => 
+                 renderWorkflowTree(child, level + 1)
+               )}
+             </div>
+           );
+         };
+
+         const exportResults = () => {
+           const results = {
+             input: userInput,
+             nlpAnalysis: nlpResults,
+             workflow: workflow,
+             timestamp: new Date().toISOString()
+           };
+           
+           const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+           const url = URL.createObjectURL(blob);
+           const a = document.createElement('a');
+           a.href = url;
+           a.download = 'enhanced-clinical-analysis.json';
+           a.click();
+           URL.revokeObjectURL(url);
+         };
+
+         return (
+           <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+             {/* SOCR Navbar */}
+             <nav className="bg-white shadow-lg border-b-4 border-blue-600">
+               <div className="max-w-7xl mx-auto px-6 py-4">
+                 <div className="flex items-center justify-between">
+                   <div className="flex items-center space-x-4">
+                     {/* SOCR Logo */}
+                     
+		     <div className="w-12 h-12 flex items-center justify-center">
+                                    <img src="SOCR_Logo.png" alt="SOCR Logo" className="w-12 h-12 object-contain" />
+                     </div>
+                     <div>
+                       <h1 className="text-2xl font-bold text-gray-800">CLNQ: AI Clinical Decision Support (Gen-0)</h1>
+                       <p className="text-sm text-gray-600">Statistics Online Computational Resource</p>
+                     </div>
+                   </div>
+                   <div className="flex items-center space-x-6">
+                     <a href="https://www.socr.umich.edu/" target="_blank" rel="noopener noreferrer" 
+                        className="text-blue-600 hover:text-blue-800 transition-colors">
+                       Visit SOCR.umich.edu
+                     </a>
+					 <div className="text-blue-600 hover:text-blue-800 transition-colors">
+                       <a href="https://www.socr.umich.edu/GAIM" target="_blank" rel="noopener noreferrer" 
+                        className="text-blue-600 hover:text-blue-800 transition-colors">Other SOCR GAIM Platforms</a>
+                     </div>
+                     <div className="text-sm text-gray-500">
+                       University of Michigan
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             </nav>
+
+             <div className="p-6">
+               <div className="max-w-7xl mx-auto">
+                 {/* Header */}
+                 <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                   <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                     Enhanced Clinical Decision Support System
+                   </h1>
+                   <p className="text-gray-600 mb-4">
+                     AI-Powered Diagnostic, Treatment & Prognostic Analysis with Comprehensive Cost Modeling
+                   </p>
+                   <div className="flex gap-2 mb-4 text-sm">
+                     <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">Advanced NLP</span>
+                     <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">HPO Integration</span>
+                     <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">Monte Carlo Simulations</span>
+                     <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full">Comprehensive Costs</span>
+                   </div>
+                   
+                   {/* View Mode Toggle */}
+                   <div className="flex gap-2">
+                     <button
+                       onClick={() => setViewMode('tree')}
+                       className={`px-4 py-2 rounded-lg transition-colors ${
+                         viewMode === 'tree' 
+                           ? 'bg-blue-600 text-white' 
+                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                       }`}
+                     >
+                       Tree View
+                     </button>
+                     <button
+                       onClick={() => setViewMode('alluvial')}
+                       className={`px-4 py-2 rounded-lg transition-colors ${
+                         viewMode === 'alluvial' 
+                           ? 'bg-blue-600 text-white' 
+                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                       }`}
+                     >
+                       Alluvial Flow
+                     </button>
+                   </div>
+                 </div>
+
+                 {/* Input Section */}
+                 <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                   <h2 className="text-xl font-semibold mb-4">Describe Your Health Concern</h2>
+                   <textarea
+                     value={userInput}
+                     onChange={(e) => setUserInput(e.target.value)}
+                     placeholder="I have frequent and severe headaches every morning, which are coupled with body chills and fatigue. The headaches are excruciating and have been constant for the past week."
+                     className="w-full h-32 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   />
+                   <div className="flex gap-4 mt-4">
+                     <button
+                       onClick={handleAnalyze}
+                       disabled={!userInput.trim() || isAnalyzing}
+                       className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                     >
+                       {isAnalyzing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                       {isAnalyzing ? 'Analyzing...' : 'Enhanced Analysis'}
+                     </button>
+                     {workflow && (
+                       <button
+                         onClick={exportResults}
+                         className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                       >
+                         <Download className="w-4 h-4" />
+                         Export Results
+                       </button>
+                     )}
+                   </div>
+                   
+                   {isAnalyzing && (
+                     <div className="mt-4">
+                       <div className="bg-gray-200 rounded-full h-3">
+                         <div 
+                           className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                           style={{ width: `${analysisProgress}%` }}
+                         ></div>
+                       </div>
+                       <p className="text-sm text-gray-600 mt-2">
+                         Processing enhanced biomedical knowledge bases and running comprehensive simulations...
+                       </p>
+                     </div>
+                   )}
+                 </div>
+
+                 {/* NLP Analysis Results */}
+                 {nlpResults && (
+                   <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                     <h2 className="text-xl font-semibold mb-4">NLP Analysis Results</h2>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                       <div className="bg-blue-50 p-4 rounded-lg">
+                         <h3 className="font-medium text-blue-800 mb-2">Extracted Symptoms</h3>
+                         <div className="space-y-1">
+                           {nlpResults.symptoms && nlpResults.symptoms.map((symptom, index) => (
+                             <span key={`${symptom}-${index}`} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm mr-1">
+                               {String(symptom).replace(/_/g, ' ')}
+                             </span>
+                           ))}
+                         </div>
+                       </div>
+                       <div className="bg-green-50 p-4 rounded-lg">
+                         <h3 className="font-medium text-green-800 mb-2">Severity Assessment</h3>
+                         <div className="space-y-1 text-sm">
+                           {nlpResults.severity && Object.entries(nlpResults.severity).map(([symptom, level]) => (
+                             <div key={`severity-${symptom}`} className="flex justify-between">
+                               <span>{String(symptom).replace(/_/g, ' ')}:</span>
+                               <span className="font-medium">{String(level)}</span>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                       <div className="bg-purple-50 p-4 rounded-lg">
+                         <h3 className="font-medium text-purple-800 mb-2">Temporal Patterns</h3>
+                         <div className="space-y-1 text-sm">
+                           {nlpResults.temporal && Object.entries(nlpResults.temporal).map(([symptom, pattern]) => (
+                             <div key={`temporal-${symptom}`} className="flex justify-between">
+                               <span>{String(symptom).replace(/_/g, ' ')}:</span>
+                               <span className="font-medium">{String(pattern)}</span>
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+
+                 {/* Results Section */}
+                 {workflow && (
+                   <div className="bg-white rounded-xl shadow-lg p-6">
+                     <h2 className="text-xl font-semibold mb-4">Enhanced Clinical Decision Workflow</h2>
+                     
+                     <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6">
+                       <h3 className="font-semibold text-gray-800 mb-2">Comprehensive Cost Analysis</h3>
+                       <p className="text-sm text-gray-600 mb-3">
+                         Our enhanced system now includes multi-dimensional cost analysis:
+                       </p>
+                       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                         <div className="flex items-center gap-1">
+                           <DollarSign className="w-3 h-3 text-green-600" />
+                           <span><strong>Monetary:</strong> Direct financial costs</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <Thermometer className="w-3 h-3 text-red-600" />
+                           <span><strong>Pain:</strong> Physical discomfort levels</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <Heart className="w-3 h-3 text-pink-600" />
+                           <span><strong>Emotional:</strong> Psychological stress</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <Users className="w-3 h-3 text-blue-600" />
+                           <span><strong>Social:</strong> Impact on relationships</span>
+                         </div>
+                         <div className="flex items-center gap-1">
+                           <Clock className="w-3 h-3 text-purple-600" />
+                           <span><strong>Time:</strong> Treatment duration</span>
+                         </div>
+                       </div>
+                     </div>
+                     
+                     {/* Workflow Visualization */}
+                     {viewMode === 'alluvial' ? (
+                       <div className="mb-6">
+                         <h3 className="font-semibold mb-3">Interactive Alluvial Flow Diagram with Quantitative Outcomes</h3>
+                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-sm">
+                           <div className="flex items-start gap-2">
+                             <Eye className="w-4 h-4 text-yellow-600 mt-0.5" />
+                             <div>
+                               <strong>Enhanced Alluvial Features:</strong>
+                               <ul className="mt-1 space-y-1 text-xs">
+                                 <li>• <strong>Outcome nodes</strong> show SUCCESS probability and COST estimates directly in flow</li>
+                                 <li>• <strong>Connection thickness</strong> represents treatment success likelihood</li>
+                                 <li>• <strong>Cost indicators:</strong> Pain, Emot=Emotional, Soc=Social, Time=Time commitment</li>
+                                 <li>• <strong>Click nodes</strong> for detailed breakdown in tooltip</li>
+                               </ul>
+                             </div>
+                           </div>
+                         </div>
+                         <AlluvialFlow 
+                           workflow={workflow} 
+                           onNodeClick={(node) => setSelectedPath(node)}
+                           selectedPath={selectedPath}
+                         />
+                         <p className="text-xs text-gray-500 mt-2">
+                           Red-bordered outcome nodes display quantitative results. Connection opacity and thickness indicate success probability.
+                         </p>
+                       </div>
+                     ) : (
+                       <div className="max-h-96 overflow-y-auto">
+                         {renderWorkflowTree(workflow)}
+                       </div>
+                     )}
+                     
+                     <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+                       <h3 className="font-semibold text-gray-800 mb-2">Enhanced Data Integration</h3>
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                         <div>
+                           <strong>Biomedical Knowledgebase:</strong> Expanded symptom-condition mappings with severity indicators and treatment protocols
+                         </div>
+                         <div>
+                           <strong>Enhanced HPO:</strong> Comprehensive phenotype ontology with synonyms and relationship mapping
+                         </div>
+                         <div>
+                           <strong>Advanced NLP:</strong> Multi-pattern extraction for symptoms, severity, temporal patterns, and frequency analysis
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+               </div>
+             </div>
+
+             {/* SOCR Footer */}
+             <footer className="bg-gray-800 text-white mt-12">
+               <div className="max-w-7xl mx-auto px-6 py-8">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                   <div>
+                     <div className="flex items-center space-x-3 mb-4">
+                       <div className="w-12 h-12 flex items-center justify-center">
+                                    <img src="SOCR_Logo.png" alt="SOCR Logo" className="w-12 h-12 object-contain" />
+                       </div>
+                       <div>
+                         <h3 className="text-lg font-semibold">SOCR</h3>
+                         <p className="text-sm text-gray-300">Statistics Online Computational Resource</p>
+                       </div>
+                     </div>
+                     <p className="text-gray-300 text-sm">
+                       Advancing data science education and research through innovative computational tools and methodologies.
+                     </p>
+					 <ul className="space-y-2 text-sm">
+                       <li>
+                         <a href="https://socr.umich.edu/GAIM/SOCR_CLNQ_1.html" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           CLNQ Gen-1</a>
+                       </li>
+                       <li>
+                         <a href="https://socr.umich.edu/GAIM/SOCR_CLNQ_2.html" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           CLNQ Gen-2</a>
+                       </li>
+                       <li>
+                         <a href="https://clinique.statisticalcomputing.org/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           CLNQ Gen-3</a>
+                       </li>
+                       <li>
+                         <a href="https://clnq.statisticalcomputing.org/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           CLNQ Gen-4</a>
+                       </li>
+                     </ul>
+                   </div>
+                   
+                   <div>
+                     <h4 className="text-lg font-semibold mb-4">Clinical AI Platform</h4>
+                     <ul className="space-y-2 text-sm text-gray-300">
+                       <li>• Advanced NLP Symptom Analysis</li>
+                       <li>• Biomedical Knowledge Integration</li>
+                       <li>• Monte Carlo Statistical Modeling</li>
+                       <li>• Comprehensive Cost Analysis</li>
+                       <li>• Interactive Decision Pathways</li>
+                     </ul>
+                   </div>
+                   
+                   <div>
+                     <h4 className="text-lg font-semibold mb-4">Resources</h4>
+                     <ul className="space-y-2 text-sm">
+                       <li>
+                         <a href="https://www.socr.umich.edu/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           SOCR Main Site
+                         </a>
+                       </li>
+                       <li>
+                         <a href="https://www.socr.umich.edu/htmls/SOCR_Data.html" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           Datasets & Tools
+                         </a>
+                       </li>
+                       <li>
+                         <a href="https://www.socr.umich.edu/htmls/SOCR_EducationalMaterials.html" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           Educational Materials
+                         </a>
+                       </li>
+                       <li>
+                         <a href="https://github.com/SOCR" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           GitHub Repository
+                         </a>
+                       </li>
+                     </ul>
+                   </div>
+                 </div>
+                 
+                 <div className="border-t border-gray-700 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
+                   <div className="text-sm text-gray-400">
+                     © 2025 SOCR - University of Michigan. All rights reserved.
+                   </div>
+                   <div className="text-sm text-gray-400 mt-2 md:mt-0">
+                     <strong>Disclaimer:</strong> This tool is for educational and research purposes only. 
+                     Always consult healthcare professionals for medical decisions.
+                   </div>
+                 </div>
+               </div>
+             </footer>
+           </div>
+         );
+       };
+       
+       // ReactDOM.render(<EnhancedClinicalDecisionApp />, document.getElementById('root'));
+       // Use React 18 createRoot API
+       const root = ReactDOM.createRoot(document.getElementById('root'));
+       root.render(<EnhancedClinicalDecisionApp />);
+   </script>
+
+                             <!-- Start of StatCounter Code -->
+		<!-- 
+		<script type="text/javascript">
+			var sc_project=5714596; 
+			var sc_invisible=1; 
+			var sc_partition=71; 
+			var sc_click_stat=1; 
+			var sc_security="038e9ac4"; 
+		</script>
+		
+		<script type="text/javascript" src="http://www.statcounter.com/counter/counter.js"></script>
+		-->
+		
+		<script type="text/javascript">
+			var sc_project = 5714596;
+			var sc_invisible = 1;
+			var sc_security = "038e9ac4";
+			var scJsHost = (("https:" == document.location.protocol) ? "https://secure."
+					: "https://www.");
+			document
+					.write("<sc"+"ript type='text/javascript' src='" +
+			scJsHost+
+			"statcounter.com/counter/counter.js'></"+"script>");
+		</script>
+		<noscript>
+			<div class="statcounter">
+				<a title="web analytics" href="https://statcounter.com/"
+					target="_blank"><img class="statcounter"
+					src="//c.statcounter.com/5714596/0/038e9ac4/1/"
+					alt="web
+			analytics"></a>
+			</div>
+		</noscript>
+	<!-- End of StatCounter Code -->
+	
+	<!-- GoogleAnalytics -->
+		<script src="https://www.google-analytics.com/urchin.js" type="text/javascript"> </script>
+		<script type="text/javascript"> _uacct = "UA-676559-1"; urchinTracker(); </script>
+		
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-69710121-1"></script>
+		<script>
+		  window.dataLayer = window.dataLayer || [];
+		  function gtag(){dataLayer.push(arguments);}
+		  gtag('js', new Date());
+		
+		  gtag('config', 'UA-69710121-1');
+		</script>
+	<!-- End of GoogleAnalytics Code -->
+
+</body>
+</html>

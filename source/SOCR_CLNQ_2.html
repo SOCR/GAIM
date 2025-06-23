@@ -1,0 +1,3774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOCR CLNQ: Clinical Decision Support System</title>
+    <link rel="icon" type="image/png" href="SOCR_Logo.png">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .lucide { width: 1rem; height: 1rem; stroke: currentColor; stroke-width: 2; fill: none; }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+<script type="text/babel">
+        // Icons
+        const AlertCircle = () => <svg className="lucide"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+        const Activity = () => <svg className="lucide"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>;
+        const TrendingUp = () => <svg className="lucide"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/><polyline points="17,6 23,6 23,12"/></svg>;
+        const DollarSign = () => <svg className="lucide"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
+        const Brain = () => <svg className="lucide"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/></svg>;
+        const Heart = () => <svg className="lucide"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+        const Users = () => <svg className="lucide"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>;
+        const Clock = () => <svg className="lucide"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>;
+        const Thermometer = () => <svg className="lucide"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>;
+        const Database = () => <svg className="lucide"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>;
+        const Download = () => <svg className="lucide"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
+        const Play = () => <svg className="lucide"><polygon points="5,3 19,12 5,21"/></svg>;
+        const Pause = () => <svg className="lucide"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>;
+        const ChevronDown = () => <svg className="lucide"><polyline points="6,9 12,15 18,9"/></svg>;
+        const ChevronRight = () => <svg className="lucide"><polyline points="9,18 15,12 9,6"/></svg>;
+
+        // Enhanced Knowledge Service that prioritizes clinical coherence over data complexity
+
+// INSERT DYNAMIC SYMPTOM DETECTOR CLASS HERE
+// (Copy the entire DynamicSymptomDetector class from artifact 1)
+// Dynamic Symptom Detection using HPO metadata
+class DynamicSymptomDetector {
+    constructor(hpoData, biomedicalKB) {
+        this.hpoData = hpoData;
+        this.biomedicalKB = biomedicalKB;
+        this.symptomIndex = this.buildDynamicSymptomIndex();
+        this.synonymIndex = this.buildSynonymIndex();
+    }
+
+    buildDynamicSymptomIndex() {
+        const index = new Map();
+        
+        // Extract from HPO data
+        if (this.hpoData?.graphs?.[0]?.nodes) {
+            this.hpoData.graphs[0].nodes.forEach(node => {
+                const hpoId = node.id.replace('http://purl.obolibrary.org/obo/', '');
+                const name = (node.lbl || node.label || '').toLowerCase();
+                const definition = node.meta?.definition?.val || '';
+                const synonyms = node.meta?.synonyms?.map(s => s.val.toLowerCase()) || [];
+                
+                if (name && this.isClinicalSymptom(name, definition)) {
+                    index.set(hpoId, {
+                        hpoId,
+                        name,
+                        definition,
+                        synonyms,
+                        searchTerms: this.generateSearchTerms(name, synonyms),
+                        clinicalRelevance: this.calculateClinicalRelevance(name, definition, synonyms)
+                    });
+                }
+            });
+        }
+        
+        // Extract from Biomedical KB symptoms
+        if (this.biomedicalKB?.symptoms) {
+            Object.entries(this.biomedicalKB.symptoms).forEach(([symptomId, symptomData]) => {
+                const name = (symptomData.name || symptomId).toLowerCase();
+                const description = symptomData.properties?.description || '';
+                
+                if (!this.findByName(index, name)) {
+                    index.set(symptomId, {
+                        symptomId,
+                        name,
+                        description,
+                        searchTerms: this.generateSearchTerms(name, []),
+                        clinicalRelevance: this.calculateClinicalRelevance(name, description, []),
+                        associatedConditions: symptomData.properties?.associated_conditions || []
+                    });
+                }
+            });
+        }
+        
+        console.log(`Built dynamic symptom index with ${index.size} symptoms`);
+        return index;
+    }
+
+    buildSynonymIndex() {
+        const synonymIndex = new Map();
+        
+        for (const [id, symptom] of this.symptomIndex) {
+            // Index main name
+            synonymIndex.set(symptom.name, id);
+            
+            // Index synonyms
+            if (symptom.synonyms) {
+                symptom.synonyms.forEach(synonym => {
+                    synonymIndex.set(synonym.toLowerCase(), id);
+                });
+            }
+            
+            // Index search terms
+            if (symptom.searchTerms) {
+                symptom.searchTerms.forEach(term => {
+                    if (!synonymIndex.has(term)) {
+                        synonymIndex.set(term, id);
+                    }
+                });
+            }
+        }
+        
+        return synonymIndex;
+    }
+
+    isClinicalSymptom(name, definition) {
+        // Check if this HPO term represents a clinical symptom
+        const symptomKeywords = [
+            'pain', 'ache', 'headache', 'fever', 'nausea', 'fatigue', 'weakness',
+            'bleeding', 'blood', 'hematuria', 'dyspnea', 'cough', 'vomiting',
+            'diarrhea', 'constipation', 'swelling', 'edema', 'rash', 'itching',
+            'dizziness', 'vertigo', 'syncope', 'palpitations', 'tachycardia',
+            'bradycardia', 'hypertension', 'hypotension', 'chest pain', 'abdominal pain'
+        ];
+        
+        const excludeKeywords = [
+            'abnormality of', 'abnormal', 'increased', 'decreased', 'reduced',
+            'elevated', 'morphology', 'structure', 'development'
+        ];
+        
+        const nameOrDef = (name + ' ' + definition).toLowerCase();
+        
+        // Exclude structural/developmental terms
+        if (excludeKeywords.some(keyword => nameOrDef.includes(keyword))) {
+            return false;
+        }
+        
+        // Include symptom terms
+        return symptomKeywords.some(keyword => nameOrDef.includes(keyword)) ||
+               this.isSymptomByPattern(name);
+    }
+
+    isSymptomByPattern(name) {
+        // Pattern-based symptom detection
+        const symptomPatterns = [
+            /.*uria$/,          // hematuria, proteinuria, etc.
+            /.*algia$/,         // myalgia, arthralgia, etc.
+            /.*dynia$/,         // dysuria, etc.
+            /.*pnea$/,          // dyspnea, apnea, etc.
+            /.*itis$/,          // when referring to symptoms of inflammation
+            /pain$/,            // any type of pain
+            /ache$/,            // any type of ache
+        ];
+        
+        return symptomPatterns.some(pattern => pattern.test(name));
+    }
+
+    generateSearchTerms(name, synonyms) {
+        const terms = new Set([name]);
+        
+        // Add synonyms
+        synonyms.forEach(synonym => terms.add(synonym));
+        
+        // Add variations
+        const variations = this.generateVariations(name);
+        variations.forEach(variation => terms.add(variation));
+        
+        // Add word components for compound terms
+        const words = name.split(/[\s-_]+/);
+        if (words.length > 1) {
+            words.forEach(word => {
+                if (word.length > 3) terms.add(word);
+            });
+        }
+        
+        return Array.from(terms);
+    }
+
+    generateVariations(term) {
+        const variations = [];
+        
+        // Medical term variations
+        const medicalVariations = {
+            'hematuria': ['blood in urine', 'bloody urine', 'red urine'],
+            'dyspnea': ['shortness of breath', 'breathing difficulty', 'breathlessness'],
+            'cephalgia': ['headache', 'head pain'],
+            'myalgia': ['muscle pain', 'muscle ache'],
+            'arthralgia': ['joint pain'],
+            'nephralgia': ['kidney pain', 'renal pain'],
+            'thoracalgia': ['chest pain'],
+            'otalgia': ['ear pain'],
+            'gastralgia': ['stomach pain'],
+            'neuralgia': ['nerve pain']
+        };
+        
+        if (medicalVariations[term]) {
+            variations.push(...medicalVariations[term]);
+        }
+        
+        // Pattern-based variations
+        if (term.endsWith('algia')) {
+            const root = term.slice(0, -5);
+            variations.push(`${root} pain`, `${root} ache`);
+        }
+        
+        if (term.includes('pain')) {
+            variations.push(term.replace('pain', 'ache'));
+        }
+        
+        return variations;
+    }
+
+    calculateClinicalRelevance(name, definition, synonyms) {
+        let relevance = 0.5; // Base relevance
+        
+        // Increase for common clinical terms
+        const highRelevanceTerms = ['pain', 'blood', 'fever', 'nausea', 'fatigue', 'headache'];
+        if (highRelevanceTerms.some(term => name.includes(term))) {
+            relevance += 0.3;
+        }
+        
+        // Increase for specific medical terms
+        const specificTerms = ['hematuria', 'dyspnea', 'angina', 'syncope'];
+        if (specificTerms.some(term => name.includes(term))) {
+            relevance += 0.2;
+        }
+        
+        // Increase if has definition
+        if (definition && definition.length > 50) {
+            relevance += 0.1;
+        }
+        
+        // Increase if has synonyms
+        if (synonyms && synonyms.length > 0) {
+            relevance += 0.1;
+        }
+        
+        return Math.min(relevance, 1.0);
+    }
+
+    findByName(index, name) {
+        for (const [id, symptom] of index) {
+            if (symptom.name === name) return symptom;
+        }
+        return null;
+    }
+
+// Enhanced Symptom Detection
+detectSymptoms(text) {
+    console.log('=== Enhanced Symptom Detection ===');
+    console.log('Input text:', text);
+    
+    const detectedSymptoms = [];
+    const lowerText = text.toLowerCase();
+    const processedTerms = new Set();
+    
+    // Method 1: Enhanced pattern-based detection (primary method)
+    const medicalPatterns = this.getEnhancedMedicalPatterns();
+    
+    Object.entries(medicalPatterns).forEach(([patternName, patternData]) => {
+        const matches = this.findPatternMatches(lowerText, patternData);
+        
+        matches.forEach(match => {
+            if (!processedTerms.has(match.term)) {
+                console.log(`Pattern match: ${match.term} from pattern ${patternName}`);
+                
+                // Get HPO data for this term
+                const hpoMatch = this.findHPOForTerm(match.term);
+                
+                const detectedSymptom = {
+                    id: match.term.replace(/\s+/g, '_'),
+                    name: match.term,
+                    hpoId: hpoMatch?.hpoId,
+                    matchedTerm: match.term,
+                    confidence: match.confidence,
+                    severity: this.extractSeverity(lowerText, match.term),
+                    temporal: this.extractTemporal(lowerText, match.term),
+                    definition: hpoMatch?.definition || `Medical condition: ${match.term}`,
+                    synonyms: hpoMatch?.synonyms || [],
+                    clinicalRelevance: 0.9 // High relevance for pattern matches
+                };
+                
+                detectedSymptoms.push(detectedSymptom);
+                processedTerms.add(match.term);
+            }
+        });
+    });
+    
+    // Method 2: Direct HPO symptom matching (with context validation)
+    for (const [symptomId, symptom] of this.symptomIndex) {
+        if (processedTerms.has(symptomId)) continue;
+        
+        const matchResult = this.calculateDetailedMatch(lowerText, symptom);
+        
+        // Higher threshold and context validation for HPO matches
+        if (matchResult.score > 0.7 && this.validateContextualRelevance(lowerText, symptom, matchResult.matchedTerm)) {
+            console.log(`HPO match: ${symptom.name} - Score: ${matchResult.score}`);
+            
+            const detectedSymptom = {
+                id: symptomId,
+                name: symptom.name,
+                hpoId: symptom.hpoId,
+                matchedTerm: matchResult.matchedTerm,
+                confidence: matchResult.score,
+                severity: this.extractSeverity(lowerText, matchResult.matchedTerm),
+                temporal: this.extractTemporal(lowerText, matchResult.matchedTerm),
+                definition: symptom.definition || symptom.description,
+                synonyms: symptom.synonyms || [],
+                clinicalRelevance: symptom.clinicalSignificance || 0.7
+            };
+            
+            detectedSymptoms.push(detectedSymptom);
+            processedTerms.add(symptomId);
+        }
+    }
+    
+    // Sort by relevance and confidence, limit to most relevant
+    const finalSymptoms = detectedSymptoms
+        .sort((a, b) => (b.clinicalRelevance * b.confidence) - (a.clinicalRelevance * a.confidence))
+        .slice(0, 6); // Reduce to top 6 most relevant
+        
+    console.log(`Final detected symptoms: ${finalSymptoms.length}`);
+    finalSymptoms.forEach(s => console.log(`- ${s.name} (confidence: ${s.confidence.toFixed(2)})`));
+    
+    return finalSymptoms;
+}
+
+// Add context validation to prevent false positives
+validateContextualRelevance(text, symptom, matchedTerm) {
+    const symptomCategory = symptom.category || symptom.bodySystem;
+    
+    // For pain-related symptoms, check if the pain type matches the context
+    if (symptom.name.includes('pain') && matchedTerm === 'pain') {
+        const painType = symptom.name.replace(/\s*pain\s*/, '').trim();
+        
+        // Only match if the specific pain type is mentioned in context
+        if (painType && !text.includes(painType.toLowerCase())) {
+            console.log(`Rejecting ${symptom.name} - pain type '${painType}' not found in context`);
+            return false;
+        }
+    }
+    
+    // For specific anatomical symptoms, check if the anatomy is mentioned
+    const anatomicalTerms = ['renal', 'kidney', 'chest', 'cardiac', 'heart', 'corneal', 'eye', 'ocular'];
+    const symptomAnatomy = anatomicalTerms.find(term => symptom.name.toLowerCase().includes(term));
+    
+    if (symptomAnatomy && !text.includes(symptomAnatomy) && matchedTerm.length < 6) {
+        console.log(`Rejecting ${symptom.name} - anatomical context '${symptomAnatomy}' not found`);
+        return false;
+    }
+    
+    return true;
+}
+
+// Refined medical patterns - more specific
+getEnhancedMedicalPatterns() {
+    return {
+        'corneal_conditions': {
+            patterns: [
+                /\b(corneal?\s+(?:dystrophy|erosion|ulcer|perforation|opacity|degeneration|edema))\b/gi,
+                /\b(fuchs?\s+(?:dystrophy|endothelial\s+dystrophy))\b/gi,
+                /\b(map[.\-\s]*dot[.\-\s]*fingerprint\s+dystrophy)\b/gi,
+                /\b(familial\s+corneal\s+dystrophy)\b/gi
+            ],
+            hpoMappings: {
+                'corneal dystrophy': 'HP:0007915',
+                'familial corneal dystrophy': 'HP:0007915',
+                'corneal erosion': 'HP:0007957',
+                'fuchs dystrophy': 'HP:0007915'
+            },
+            confidence: 0.95
+        },
+        'eye_specific_conditions': {
+            patterns: [
+                /\b((?:bilateral|both)\s+(?:eyes?|ocular))\b/gi,
+                /\b(visual?\s+(?:impairment|loss|disturbance|field\s+defect))\b/gi,
+                /\b(photophobia|light\s+sensitivity)\b/gi,
+                /\b(diplopia|double\s+vision)\b/gi
+            ],
+            hpoMappings: {
+                'visual impairment': 'HP:0000481',
+                'photophobia': 'HP:0000613',
+                'diplopia': 'HP:0000651'
+            },
+            confidence: 0.85
+        },
+        'kidney_conditions': {
+            patterns: [
+                /\b(kidney\s+(?:stones?|pain|disease|failure))\b/gi,
+                /\b(renal\s+(?:colic|pain|failure|dysfunction))\b/gi,
+                /\b(nephro\w+)\b/gi,
+                /\b(hematuria|blood\s+in\s+urine)\b/gi
+            ],
+            hpoMappings: {
+                'kidney pain': 'HP:0012330',
+                'renal pain': 'HP:0012330',
+                'hematuria': 'HP:0000790',
+                'blood in urine': 'HP:0000790'
+            },
+            confidence: 0.90
+        },
+        'neurological_conditions': {
+            patterns: [
+                /\b(headache|migraine|cephalgia)\b/gi,
+                /\b(seizure|epilep\w+)\b/gi,
+                /\b(stroke|cerebrovascular)\b/gi
+            ],
+            hpoMappings: {
+                'headache': 'HP:0002315',
+                'migraine': 'HP:0002315',
+                'seizure': 'HP:0001250'
+            },
+            confidence: 0.85
+        }
+    };
+}
+
+// Enhanced pattern matching with confidence scoring
+findPatternMatches(text, patternData) {
+    const matches = [];
+    
+    patternData.patterns.forEach(pattern => {
+        let match;
+        pattern.lastIndex = 0;
+        
+        while ((match = pattern.exec(text)) !== null) {
+            const matchedText = match[1] || match[0];
+            const cleanedMatch = matchedText.toLowerCase().trim();
+            
+            if (cleanedMatch.length > 3) {
+                // Use pattern-specific confidence
+                const confidence = patternData.confidence || 0.8;
+                
+                matches.push({
+                    term: cleanedMatch,
+                    confidence: confidence,
+                    position: match.index,
+                    fullMatch: match[0]
+                });
+            }
+        }
+    });
+    
+    return matches;
+}
+
+// Enhanced matching with multiple strategies
+calculateDetailedMatch(text, symptom) {
+    let bestScore = 0;
+    let bestTerm = '';
+    
+    // Check main name
+    const mainNameScore = this.calculateTermMatch(text, symptom.name);
+    if (mainNameScore > bestScore) {
+        bestScore = mainNameScore;
+        bestTerm = symptom.name;
+    }
+    
+    // Check synonyms
+    if (symptom.synonyms) {
+        symptom.synonyms.forEach(synonym => {
+            const synonymScore = this.calculateTermMatch(text, synonym);
+            if (synonymScore > bestScore) {
+                bestScore = synonymScore;
+                bestTerm = synonym;
+            }
+        });
+    }
+    
+    // Check search terms
+    if (symptom.searchTerms) {
+        symptom.searchTerms.forEach(searchTerm => {
+            const searchScore = this.calculateTermMatch(text, searchTerm);
+            if (searchScore > bestScore) {
+                bestScore = searchScore;
+                bestTerm = searchTerm;
+            }
+        });
+    }
+    
+    return { score: bestScore, matchedTerm: bestTerm };
+}
+
+calculateTermMatch(text, term) {
+    const lowerTerm = term.toLowerCase();
+    
+    // Exact match
+    if (text.includes(lowerTerm)) {
+        return 1.0;
+    }
+    
+    // Word-by-word matching
+    const textWords = text.split(/\s+/);
+    const termWords = lowerTerm.split(/\s+/);
+    
+    let wordMatches = 0;
+    termWords.forEach(termWord => {
+        if (termWord.length > 2 && textWords.some(textWord => 
+            textWord.includes(termWord) || termWord.includes(textWord))) {
+            wordMatches++;
+        }
+    });
+    
+    const wordScore = wordMatches / termWords.length;
+    
+    // Partial string matching
+    let partialScore = 0;
+    if (termWords.length === 1 && termWords[0].length > 4) {
+        const term = termWords[0];
+        textWords.forEach(textWord => {
+            if (textWord.length > 4) {
+                const similarity = this.calculateStringSimilarity(term, textWord);
+                partialScore = Math.max(partialScore, similarity);
+            }
+        });
+    }
+    
+    return Math.max(wordScore, partialScore);
+}
+
+calculateStringSimilarity(str1, str2) {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    
+    if (longer.length === 0) return 1.0;
+    
+    const editDistance = this.levenshteinDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+}
+
+levenshteinDistance(str1, str2) {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    
+    return matrix[str2.length][str1.length];
+}
+
+// Enhanced medical patterns for better detection
+getEnhancedMedicalPatterns() {
+    return {
+        'corneal_conditions': {
+            patterns: [
+                /\b(corneal?\s*(?:dystrophy|erosion|ulcer|perforation|opacity|degeneration|edema))\b/gi,
+                /\b(fuchs?\s*(?:dystrophy|endothelial\s*dystrophy))\b/gi,
+                /\b(map-dot-fingerprint\s*dystrophy)\b/gi,
+                /\b(reis-bucklers\s*dystrophy)\b/gi,
+                /\b(lattice\s*dystrophy)\b/gi,
+                /\b(granular\s*dystrophy)\b/gi
+            ],
+            hpoMappings: {
+                'corneal dystrophy': 'HP:0007915',
+                'corneal erosion': 'HP:0007957',
+                'corneal opacity': 'HP:0007957',
+                'fuchs dystrophy': 'HP:0007915'
+            }
+        },
+        'eye_conditions': {
+            patterns: [
+                /\b(visual?\s*(?:impairment|loss|disturbance|field\s*defect))\b/gi,
+                /\b(photophobia|light\s*sensitivity)\b/gi,
+                /\b(diplopia|double\s*vision)\b/gi,
+                /\b(nystagmus|eye\s*movement)\b/gi,
+                /\b(ptosis|droopy?\s*eyelid)\b/gi
+            ],
+            hpoMappings: {
+                'visual impairment': 'HP:0000481',
+                'photophobia': 'HP:0000613',
+                'diplopia': 'HP:0000651',
+                'nystagmus': 'HP:0000639'
+            }
+        },
+        'pain_symptoms': {
+            patterns: [
+                /\b((?:\w+\s+)?pain)\b/gi,
+                /\b((?:\w+\s+)?ache|aching)\b/gi,
+                /\b(\w*algia)\b/gi,
+                /\b(tender(?:ness)?|soreness)\b/gi
+            ],
+            hpoMappings: {
+                'pain': 'HP:0012531',
+                'headache': 'HP:0002315',
+                'abdominal pain': 'HP:0002027',
+                'chest pain': 'HP:0100749'
+            }
+        },
+        'systemic_symptoms': {
+            patterns: [
+                /\b(fever|pyrexia|elevated\s*temperature)\b/gi,
+                /\b(fatigue|tiredness|exhaustion|weakness)\b/gi,
+                /\b(nausea|vomiting|emesis)\b/gi,
+                /\b(dizziness|vertigo|lightheaded)\b/gi,
+                /\b(shortness\s*of\s*breath|dyspnea|breathless)\b/gi
+            ],
+            hpoMappings: {
+                'fever': 'HP:0001945',
+                'fatigue': 'HP:0012378',
+                'nausea': 'HP:0002018',
+                'dyspnea': 'HP:0002094'
+            }
+        }
+    };
+}
+
+findPatternMatches(text, patternData) {
+    const matches = [];
+    
+    patternData.patterns.forEach(pattern => {
+        let match;
+        pattern.lastIndex = 0; // Reset regex
+        
+        while ((match = pattern.exec(text)) !== null) {
+            const matchedText = match[1] || match[0];
+            const cleanedMatch = matchedText.toLowerCase().trim();
+            
+            if (cleanedMatch.length > 2) {
+                matches.push({
+                    term: cleanedMatch,
+                    confidence: 0.8,
+                    position: match.index,
+                    fullMatch: match[0]
+                });
+            }
+        }
+    });
+    
+    return matches;
+}
+
+findHPOForTerm(term) {
+    // Look through all pattern mappings to find HPO ID
+    const patterns = this.getEnhancedMedicalPatterns();
+    
+    for (const patternData of Object.values(patterns)) {
+        if (patternData.hpoMappings) {
+            for (const [mappingTerm, hpoId] of Object.entries(patternData.hpoMappings)) {
+                if (term.includes(mappingTerm.toLowerCase()) || mappingTerm.toLowerCase().includes(term)) {
+                    // Find the HPO symptom data
+                    const hpoSymptom = this.symptomIndex.get(hpoId);
+                    return {
+                        hpoId,
+                        definition: hpoSymptom?.definition,
+                        synonyms: hpoSymptom?.synonyms
+                    };
+                }
+            }
+        }
+    }
+    
+    return null;
+}
+
+performFuzzyMatching(text) {
+    const fuzzyMatches = [];
+    const textWords = text.split(/\s+/).filter(word => word.length > 3);
+    
+    for (const [symptomId, symptom] of this.symptomIndex) {
+        const symptomWords = symptom.name.toLowerCase().split(/\s+/);
+        
+        let totalSimilarity = 0;
+        let matchedWords = 0;
+        
+        symptomWords.forEach(symptomWord => {
+            if (symptomWord.length > 3) {
+                let bestWordSimilarity = 0;
+                textWords.forEach(textWord => {
+                    const similarity = this.calculateStringSimilarity(symptomWord, textWord);
+                    bestWordSimilarity = Math.max(bestWordSimilarity, similarity);
+                });
+                
+                if (bestWordSimilarity > 0.7) {
+                    totalSimilarity += bestWordSimilarity;
+                    matchedWords++;
+                }
+            }
+        });
+        
+        if (matchedWords > 0) {
+            const avgSimilarity = totalSimilarity / matchedWords;
+            const coverage = matchedWords / symptomWords.length;
+            const finalScore = avgSimilarity * coverage;
+            
+            if (finalScore > 0.4) {
+                fuzzyMatches.push({
+                    id: symptomId,
+                    name: symptom.name,
+                    hpoId: symptom.hpoId,
+                    matchedTerm: symptom.name,
+                    confidence: finalScore,
+                    severity: 'moderate',
+                    temporal: 'acute',
+                    definition: symptom.definition,
+                    synonyms: symptom.synonyms || [],
+                    clinicalRelevance: symptom.clinicalSignificance || 0.7,
+                    score: finalScore
+                });
+            }
+        }
+    }
+    
+    return fuzzyMatches;
+}
+
+    calculateMatchConfidence(term, text, symptom) {
+        let confidence = 0.7; // Base confidence
+        
+        // Exact match bonus
+        if (symptom.name === term) confidence += 0.2;
+        
+        // Context relevance
+        if (this.hasRelevantContext(text, term)) confidence += 0.1;
+        
+        // Term specificity bonus
+        if (term.length > 8) confidence += 0.1;
+        
+        // High relevance symptom bonus
+        if (symptom.clinicalRelevance > 0.8) confidence += 0.1;
+        
+        return Math.min(confidence, 1.0);
+    }
+
+    hasRelevantContext(text, term) {
+        const contextWords = ['patient', 'presents', 'complains', 'reports', 'experiencing', 'suffering', 'has', 'with'];
+        const termIndex = text.indexOf(term);
+        
+        if (termIndex === -1) return false;
+        
+        // Check for context words within 20 characters before the term
+        const contextStart = Math.max(0, termIndex - 20);
+        const context = text.slice(contextStart, termIndex);
+        
+        return contextWords.some(word => context.includes(word));
+    }
+
+    extractSeverity(text, term) {
+        const termIndex = text.indexOf(term);
+        const contextStart = Math.max(0, termIndex - 30);
+        const contextEnd = Math.min(text.length, termIndex + term.length + 30);
+        const context = text.slice(contextStart, contextEnd);
+        
+        if (/\b(severe|intense|excruciating|unbearable|debilitating)\b/.test(context)) {
+            return 'severe';
+        } else if (/\b(moderate|noticeable|bothersome|significant)\b/.test(context)) {
+            return 'moderate';
+        } else if (/\b(mild|slight|minor|dull)\b/.test(context)) {
+            return 'mild';
+        }
+        return 'moderate';
+    }
+
+    extractTemporal(text, term) {
+        const termIndex = text.indexOf(term);
+        const contextStart = Math.max(0, termIndex - 30);
+        const contextEnd = Math.min(text.length, termIndex + term.length + 30);
+        const context = text.slice(contextStart, contextEnd);
+        
+        if (/\b(chronic|ongoing|persistent|constant|history|long.?term)\b/.test(context)) {
+            return 'chronic';
+        } else if (/\b(sudden|acute|immediate|rapid|sharp)\b/.test(context)) {
+            return 'acute';
+        } else if (/\b(intermittent|occasional|episodes|comes.and.goes)\b/.test(context)) {
+            return 'episodic';
+        }
+        return 'acute';
+    }
+
+    normalizeSymptomForDisplay(symptom) {
+      return {
+        ...symptom,
+        // Ensure backward compatibility with existing display component
+        hpoTerms: symptom.hpoId ? [symptom.hpoId] : [],
+        // Add additional display-friendly fields
+        displayName: symptom.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        confidencePercent: Math.round(symptom.confidence * 100),
+        relevancePercent: Math.round((symptom.clinicalRelevance || 0.5) * 100)
+      };
+    }
+
+
+
+}
+
+
+// Fully Dynamic Knowledge Extractor - No Hardcoding!
+class DynamicKnowledgeExtractor {
+    constructor(hpoData, biomedicalKB) {
+        this.hpoData = hpoData;
+        this.biomedicalKB = biomedicalKB;
+        this.hpoSymptomIndex = this.buildHPOSymptomIndex();
+        this.hpoRelationshipGraph = this.buildHPORelationshipGraph();
+        this.biomedicalEntities = this.extractAllBiomedicalEntities();
+        this.crossReferences = this.buildCrossReferences();
+    }
+
+    // Extract ALL symptoms dynamically from HPO
+    buildHPOSymptomIndex() {
+        const symptomIndex = new Map();
+        
+        if (!this.hpoData?.graphs?.[0]?.nodes) {
+            console.log('No HPO data available for symptom extraction');
+            return symptomIndex;
+        }
+
+        this.hpoData.graphs[0].nodes.forEach(node => {
+            const hpoId = node.id.replace('http://purl.obolibrary.org/obo/', '');
+            const name = node.lbl || node.label;
+            const definition = node.meta?.definition?.val || '';
+            const synonyms = node.meta?.synonyms?.map(s => s.val) || [];
+            
+            // Determine if this HPO term represents a symptom/phenotype
+            const isSymptom = this.classifyAsSymptom(name, definition, hpoId);
+            
+            if (isSymptom) {
+                symptomIndex.set(hpoId, {
+                    hpoId,
+                    name,
+                    definition,
+                    synonyms,
+                    searchTerms: this.generateComprehensiveSearchTerms(name, synonyms),
+                    category: this.categorizeSymptom(name, definition),
+                    severity: this.inferSeverityFromDefinition(definition),
+                    bodySystem: this.identifyBodySystem(name, definition),
+                    clinicalSignificance: this.assessClinicalSignificance(definition, synonyms.length)
+                });
+            }
+        });
+
+        console.log(`Extracted ${symptomIndex.size} symptoms from HPO`);
+        return symptomIndex;
+    }
+
+    // Build HPO relationship graph for semantic relationships
+    buildHPORelationshipGraph() {
+        const graph = new Map();
+        
+        if (!this.hpoData?.graphs?.[0]?.edges) {
+            return graph;
+        }
+
+        this.hpoData.graphs[0].edges.forEach(edge => {
+            const subject = edge.sub.replace('http://purl.obolibrary.org/obo/', '');
+            const object = edge.obj.replace('http://purl.obolibrary.org/obo/', '');
+            const predicate = edge.pred;
+
+            if (!graph.has(subject)) {
+                graph.set(subject, { parents: [], children: [], related: [] });
+            }
+            if (!graph.has(object)) {
+                graph.set(object, { parents: [], children: [], related: [] });
+            }
+
+            if (predicate === 'is_a') {
+                graph.get(subject).parents.push(object);
+                graph.get(object).children.push(subject);
+            } else {
+                graph.get(subject).related.push({ target: object, relation: predicate });
+                graph.get(object).related.push({ target: subject, relation: predicate });
+            }
+        });
+
+        console.log(`Built HPO relationship graph with ${graph.size} nodes`);
+        return graph;
+    }
+
+    // Extract ALL entities from biomedical knowledge base
+    extractAllBiomedicalEntities() {
+        const entities = {
+            conditions: new Map(),
+            treatments: new Map(),
+            symptoms: new Map(),
+            procedures: new Map(),
+            medications: new Map()
+        };
+
+        // Extract from structured KB
+        if (this.biomedicalKB) {
+            this.extractFromStructuredKB(entities);
+        }
+
+        // Extract from text content if available
+        if (this.biomedicalKB?.textContent) {
+            this.extractFromTextContent(entities, this.biomedicalKB.textContent);
+        }
+
+        console.log(`Extracted entities: ${entities.conditions.size} conditions, ${entities.treatments.size} treatments, ${entities.symptoms.size} symptoms`);
+        return entities;
+    }
+
+    extractFromStructuredKB(entities) {
+        // Extract conditions
+        if (this.biomedicalKB.conditions) {
+            Object.entries(this.biomedicalKB.conditions).forEach(([id, data]) => {
+                entities.conditions.set(id, this.normalizeConditionData(id, data));
+            });
+        }
+
+        // Extract treatments
+        if (this.biomedicalKB.treatments) {
+            Object.entries(this.biomedicalKB.treatments).forEach(([id, data]) => {
+                entities.treatments.set(id, this.normalizeTreatmentData(id, data));
+            });
+        }
+
+        // Extract symptoms
+        if (this.biomedicalKB.symptoms) {
+            Object.entries(this.biomedicalKB.symptoms).forEach(([id, data]) => {
+                entities.symptoms.set(id, this.normalizeSymptomData(id, data));
+            });
+        }
+    }
+
+    extractFromTextContent(entities, textContent) {
+        // Dynamic extraction patterns for medical entities
+        const extractionPatterns = {
+            conditions: [
+                // Disease/disorder patterns
+                /\b([A-Z][a-z]+(?:\s+[a-z]+)*)\s+(disease|disorder|syndrome|condition|cancer|carcinoma|tumor|infection|itis|osis|pathy|emia|trophy)\b/gi,
+                // Specific conditions
+                /\b(diabetes|hypertension|asthma|pneumonia|bronchitis|arthritis|hepatitis|migraine|epilepsy|alzheimer|parkinson|angina|infarction)\b/gi,
+                // Dysfunction patterns
+                /\b([A-Z][a-z]+(?:\s+[a-z]+)*)\s+(dysfunction|failure|insufficiency|deficiency)\b/gi
+            ],
+            treatments: [
+                // Treatment patterns
+                /\b([A-Z][a-z]+(?:\s+[a-z]+)*)\s+(therapy|treatment|procedure|surgery|intervention)\b/gi,
+                // Medication patterns
+                /\b([a-z]+(?:cillin|mycin|statin|pril|sartan|olol|pine|zole|mab))\b/gi,
+                // Specific treatments
+                /\b(chemotherapy|radiotherapy|dialysis|transplant|bypass|angioplasty|stent|catheter)\b/gi
+            ],
+            procedures: [
+                /\b([A-Z][a-z]+(?:\s+[a-z]+)*)\s+(surgery|operation|procedure|biopsy|scan|test|examination)\b/gi,
+                /\b(endoscopy|colonoscopy|bronchoscopy|arthroscopy|laparoscopy|cystoscopy)\b/gi
+            ]
+        };
+
+        Object.entries(extractionPatterns).forEach(([entityType, patterns]) => {
+            patterns.forEach(pattern => {
+                this.extractEntitiesWithPattern(textContent, pattern, entities[entityType], entityType);
+            });
+        });
+    }
+
+    extractEntitiesWithPattern(text, pattern, entityMap, entityType) {
+        let match;
+        const seen = new Set();
+        
+        while ((match = pattern.exec(text)) !== null) {
+            const fullMatch = match[0].toLowerCase();
+            const entityName = match[1] ? match[1].toLowerCase() : fullMatch;
+            
+            if (entityName.length > 3 && !seen.has(entityName)) {
+                seen.add(entityName);
+                
+                const entityId = entityName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+                
+                if (!entityMap.has(entityId)) {
+                    const context = this.extractContext(text, match.index, 200);
+                    
+                    entityMap.set(entityId, {
+                        id: entityId,
+                        name: entityName,
+                        fullMatch: fullMatch,
+                        context: context,
+                        confidence: this.calculateExtractionConfidence(entityName, context),
+                        category: this.categorizeEntity(entityName, context, entityType),
+                        properties: this.inferPropertiesFromContext(context, entityType),
+                        searchTerms: this.generateComprehensiveSearchTerms(entityName, [fullMatch])
+                    });
+                }
+            }
+        }
+    }
+
+    // Build cross-references between HPO and biomedical entities
+    buildCrossReferences() {
+        const crossRefs = {
+            hpoToConditions: new Map(),
+            hpoToTreatments: new Map(),
+            conditionToHPO: new Map(),
+            symptomToCondition: new Map(),
+            conditionToTreatment: new Map()
+        };
+
+        // Map HPO symptoms to biomedical conditions using semantic similarity
+        for (const [hpoId, hpoSymptom] of this.hpoSymptomIndex) {
+            const relatedConditions = this.findRelatedConditions(hpoSymptom);
+            const relatedTreatments = this.findRelatedTreatments(hpoSymptom);
+            
+            if (relatedConditions.length > 0) {
+                crossRefs.hpoToConditions.set(hpoId, relatedConditions);
+            }
+            if (relatedTreatments.length > 0) {
+                crossRefs.hpoToTreatments.set(hpoId, relatedTreatments);
+            }
+        }
+
+        // Build condition-to-treatment mappings
+        for (const [conditionId, condition] of this.biomedicalEntities.conditions) {
+            const treatments = this.findTreatmentsForCondition(condition);
+            if (treatments.length > 0) {
+                crossRefs.conditionToTreatment.set(conditionId, treatments);
+            }
+        }
+
+        // Build bidirectional references
+        this.buildBidirectionalReferences(crossRefs);
+
+        console.log(`Built cross-references: ${crossRefs.hpoToConditions.size} HPO-condition mappings, ${crossRefs.conditionToTreatment.size} condition-treatment mappings`);
+        return crossRefs;
+    }
+
+    findRelatedConditions(hpoSymptom) {
+        const relatedConditions = [];
+        
+        for (const [conditionId, condition] of this.biomedicalEntities.conditions) {
+            const similarity = this.calculateSemanticSimilarity(hpoSymptom, condition);
+            
+            if (similarity > 0.3) { // Threshold for relevance
+                relatedConditions.push({
+                    conditionId,
+                    similarity,
+                    relationship: this.determineRelationshipType(hpoSymptom, condition)
+                });
+            }
+        }
+
+        return relatedConditions.sort((a, b) => b.similarity - a.similarity).slice(0, 10);
+    }
+
+    findRelatedTreatments(hpoSymptom) {
+        const relatedTreatments = [];
+        
+        for (const [treatmentId, treatment] of this.biomedicalEntities.treatments) {
+            const similarity = this.calculateSemanticSimilarity(hpoSymptom, treatment);
+            
+            if (similarity > 0.2) {
+                relatedTreatments.push({
+                    treatmentId,
+                    similarity,
+                    relationship: 'treats_symptom'
+                });
+            }
+        }
+
+        return relatedTreatments.sort((a, b) => b.similarity - a.similarity).slice(0, 5);
+    }
+
+    findTreatmentsForCondition(condition) {
+        const treatments = [];
+        
+        for (const [treatmentId, treatment] of this.biomedicalEntities.treatments) {
+            const relevance = this.calculateTreatmentRelevance(condition, treatment);
+            
+            if (relevance > 0.3) {
+                treatments.push({
+                    treatmentId,
+                    relevance,
+                    efficacy: this.estimateEfficacy(condition, treatment),
+                    cost: this.estimateCost(treatment),
+                    sideEffects: this.estimateSideEffects(treatment)
+                });
+            }
+        }
+
+        return treatments.sort((a, b) => b.relevance - a.relevance).slice(0, 8);
+    }
+
+    // Semantic similarity calculation
+    calculateSemanticSimilarity(entity1, entity2) {
+        const terms1 = new Set([
+            entity1.name,
+            ...(entity1.synonyms || []),
+            ...(entity1.searchTerms || [])
+        ].map(term => term.toLowerCase()));
+
+        const terms2 = new Set([
+            entity2.name,
+            ...(entity2.synonyms || []),
+            ...(entity2.searchTerms || [])
+        ].map(term => term.toLowerCase()));
+
+        // Jaccard similarity
+        const intersection = new Set([...terms1].filter(term => terms2.has(term)));
+        const union = new Set([...terms1, ...terms2]);
+        
+        let similarity = intersection.size / union.size;
+
+        // Boost similarity for word overlap
+        similarity += this.calculateWordOverlap(entity1.name, entity2.name) * 0.3;
+
+        // Boost for semantic relationships
+        similarity += this.calculateSemanticBoost(entity1, entity2);
+
+        return Math.min(similarity, 1.0);
+    }
+
+    calculateWordOverlap(text1, text2) {
+        const words1 = new Set(text1.toLowerCase().split(/\s+/));
+        const words2 = new Set(text2.toLowerCase().split(/\s+/));
+        
+        const intersection = new Set([...words1].filter(word => words2.has(word)));
+        const union = new Set([...words1, ...words2]);
+        
+        return intersection.size / union.size;
+    }
+
+    calculateSemanticBoost(entity1, entity2) {
+        let boost = 0;
+        
+        // Body system matching
+        if (entity1.bodySystem && entity2.category && 
+            entity1.bodySystem === entity2.category) {
+            boost += 0.2;
+        }
+
+        // Context similarity
+        if (entity1.context && entity2.context) {
+            boost += this.calculateWordOverlap(entity1.context, entity2.context) * 0.1;
+        }
+
+        return boost;
+    }
+
+    // Utility methods for classification and inference
+    classifyAsSymptom(name, definition, hpoId) {
+        const lowerName = name.toLowerCase();
+        const lowerDef = definition.toLowerCase();
+        
+        // Exclude anatomical structures and developmental terms
+        const excludePatterns = [
+            /abnormality of.*morphology/,
+            /abnormal.*shape/,
+            /absent/,
+            /agenesis/,
+            /aplasia/,
+            /malformation/,
+            /increased.*size/,
+            /decreased.*size/
+        ];
+
+        if (excludePatterns.some(pattern => pattern.test(lowerName + ' ' + lowerDef))) {
+            return false;
+        }
+
+        // Include symptom patterns
+        const includePatterns = [
+            /pain/,
+            /ache/,
+            /bleeding/,
+            /discharge/,
+            /fever/,
+            /nausea/,
+            /fatigue/,
+            /weakness/,
+            /difficulty/,
+            /loss/,
+            /sensation/,
+            /movement/,
+            /function/
+        ];
+
+        return includePatterns.some(pattern => pattern.test(lowerName + ' ' + lowerDef));
+    }
+
+    categorizeSymptom(name, definition) {
+        const text = (name + ' ' + definition).toLowerCase();
+        
+        const categories = {
+            'neurological': /brain|nerve|neural|cognitive|memory|seizure|headache|migraine/,
+            'cardiovascular': /heart|cardiac|blood|vessel|circulation|pressure|pulse/,
+            'respiratory': /lung|breath|respiratory|cough|dyspnea|pneumonia/,
+            'gastrointestinal': /stomach|intestinal|digestive|nausea|vomiting|diarrhea/,
+            'genitourinary': /kidney|renal|urinary|bladder|urine|genital/,
+            'musculoskeletal': /muscle|bone|joint|skeletal|arthritis|myalgia/,
+            'dermatological': /skin|dermal|rash|lesion|pigmentation/,
+            'ophthalmological': /eye|ocular|visual|corneal|retinal|vision/,
+            'endocrine': /hormone|gland|diabetes|thyroid|metabolic/,
+            'hematological': /blood|hematological|anemia|bleeding|coagulation/
+        };
+
+        for (const [category, pattern] of Object.entries(categories)) {
+            if (pattern.test(text)) return category;
+        }
+
+        return 'general';
+    }
+
+    identifyBodySystem(name, definition) {
+        return this.categorizeSymptom(name, definition);
+    }
+
+    assessClinicalSignificance(definition, synonymCount) {
+        let significance = 0.5;
+        
+        if (definition.length > 100) significance += 0.2;
+        if (synonymCount > 2) significance += 0.1;
+        if (/severe|critical|life-threatening/.test(definition)) significance += 0.3;
+        if (/common|frequent/.test(definition)) significance += 0.1;
+        
+        return Math.min(significance, 1.0);
+    }
+
+    generateComprehensiveSearchTerms(name, synonyms) {
+        const terms = new Set([name.toLowerCase()]);
+        
+        // Add synonyms
+        synonyms.forEach(synonym => terms.add(synonym.toLowerCase()));
+        
+        // Add word variants
+        const words = name.toLowerCase().split(/\s+/);
+        words.forEach(word => {
+            if (word.length > 3) {
+                terms.add(word);
+                // Add medical variants
+                this.generateMedicalVariants(word).forEach(variant => terms.add(variant));
+            }
+        });
+
+        return Array.from(terms);
+    }
+
+    generateMedicalVariants(word) {
+        const variants = [];
+        
+        // Common medical suffixes and their variants
+        const suffixMap = {
+            'algia': ['pain', 'ache'],
+            'uria': ['in urine'],
+            'pnea': ['breathing', 'breath'],
+            'itis': ['inflammation'],
+            'osis': ['condition'],
+            'pathy': ['disease'],
+            'emia': ['in blood']
+        };
+
+        Object.entries(suffixMap).forEach(([suffix, meanings]) => {
+            if (word.endsWith(suffix)) {
+                const root = word.slice(0, -suffix.length);
+                meanings.forEach(meaning => {
+                    variants.push(`${root} ${meaning}`);
+                });
+            }
+        });
+
+        return variants;
+    }
+
+    // Property inference methods
+    inferPropertiesFromContext(context, entityType) {
+        const properties = {};
+        
+        if (entityType === 'conditions') {
+            properties.severity = this.inferSeverityFromDefinition(context);
+            properties.prognosis = this.inferPrognosisFromContext(context);
+            properties.chronicityRisk = this.inferChronicityFromContext(context);
+        } else if (entityType === 'treatments') {
+            properties.efficacy = this.inferEfficacyFromContext(context);
+            properties.cost = this.inferCostFromContext(context);
+            properties.sideEffects = this.inferSideEffectsFromContext(context);
+        }
+
+        return properties;
+    }
+
+    inferSeverityFromDefinition(text) {
+        const lowerText = text.toLowerCase();
+        
+        if (/severe|critical|life-threatening|fatal|emergency/.test(lowerText)) return 'severe';
+        if (/moderate|significant|notable/.test(lowerText)) return 'moderate';
+        if (/mild|minor|slight|benign/.test(lowerText)) return 'mild';
+        
+        return 'moderate';
+    }
+
+    inferPrognosisFromContext(context) {
+        const lowerContext = context.toLowerCase();
+        
+        if (/excellent|cure|full recovery/.test(lowerContext)) {
+            return 'Excellent prognosis with appropriate treatment';
+        }
+        if (/good|favorable|positive/.test(lowerContext)) {
+            return 'Good prognosis with proper management';
+        }
+        if (/poor|guarded|variable/.test(lowerContext)) {
+            return 'Variable prognosis depending on treatment response';
+        }
+        
+        return 'Prognosis depends on timely intervention and individual factors';
+    }
+
+    calculateExtractionConfidence(entityName, context) {
+        let confidence = 0.5;
+        
+        if (entityName.length > 6) confidence += 0.1;
+        if (context.includes('treatment') || context.includes('therapy')) confidence += 0.1;
+        if (context.includes('patient') || context.includes('clinical')) confidence += 0.1;
+        if (/\b(disease|disorder|syndrome|condition)\b/.test(context)) confidence += 0.2;
+        
+        return Math.min(confidence, 1.0);
+    }
+
+    // Main interface methods
+    getSymptomsByText(text) {
+        const matchedSymptoms = [];
+        const lowerText = text.toLowerCase();
+        
+        for (const [hpoId, symptom] of this.hpoSymptomIndex) {
+            const matchScore = this.calculateTextMatch(lowerText, symptom);
+            
+            if (matchScore > 0.3) {
+                matchedSymptoms.push({
+                    ...symptom,
+                    matchScore,
+                    matchedTerms: this.getMatchedTerms(lowerText, symptom)
+                });
+            }
+        }
+        
+        return matchedSymptoms.sort((a, b) => b.matchScore - a.matchScore);
+    }
+
+    getConditionsForSymptoms(symptoms) {
+        const conditionScores = new Map();
+        
+        symptoms.forEach(symptom => {
+            const relatedConditions = this.crossReferences.hpoToConditions.get(symptom.hpoId) || [];
+            
+            relatedConditions.forEach(conditionRef => {
+                const conditionData = this.biomedicalEntities.conditions.get(conditionRef.conditionId);
+                
+                if (conditionData) {
+                    const score = conditionRef.similarity * symptom.matchScore * symptom.clinicalSignificance;
+                    
+                    if (!conditionScores.has(conditionRef.conditionId)) {
+                        conditionScores.set(conditionRef.conditionId, {
+                            condition: conditionData,
+                            score: 0,
+                            evidence: []
+                        });
+                    }
+                    
+                    const conditionInfo = conditionScores.get(conditionRef.conditionId);
+                    conditionInfo.score += score;
+                    conditionInfo.evidence.push({
+                        symptom: symptom.name,
+                        similarity: conditionRef.similarity,
+                        relationship: conditionRef.relationship
+                    });
+                }
+            });
+        });
+        
+        return Array.from(conditionScores.entries())
+            .map(([conditionId, info]) => ({
+                conditionId,
+                ...info.condition,
+                probability: Math.min(info.score, 1.0),
+                evidence: info.evidence,
+                treatments: this.getTreatmentsForCondition(conditionId)
+            }))
+            .sort((a, b) => b.probability - a.probability);
+    }
+
+    getTreatmentsForCondition(conditionId) {
+        const treatments = this.crossReferences.conditionToTreatment.get(conditionId) || [];
+        
+        return treatments.map(treatmentRef => {
+            const treatmentData = this.biomedicalEntities.treatments.get(treatmentRef.treatmentId);
+            return {
+                ...treatmentData,
+                relevance: treatmentRef.relevance,
+                efficacy: treatmentRef.efficacy,
+                cost: treatmentRef.cost,
+                sideEffects: treatmentRef.sideEffects
+            };
+        });
+    }
+
+    calculateTextMatch(text, symptom) {
+        let maxScore = 0;
+        
+        symptom.searchTerms.forEach(term => {
+            if (text.includes(term)) {
+                const score = term.length / text.length * symptom.clinicalSignificance;
+                maxScore = Math.max(maxScore, score);
+            }
+        });
+        
+        return maxScore;
+    }
+
+    getMatchedTerms(text, symptom) {
+        return symptom.searchTerms.filter(term => text.includes(term));
+    }
+
+// Missing methods for DynamicKnowledgeExtractor class
+// Add these methods to the DynamicKnowledgeExtractor class
+
+// Data normalization methods
+normalizeConditionData(id, data) {
+    const name = data.name || id;
+    const properties = data.properties || {};
+    
+    return {
+        id,
+        name: name.replace(/_/g, ' '),
+        description: properties.description || data.description || '',
+        context: properties.context || data.context || '',
+        confidence: properties.confidence || data.confidence || 0.7,
+        category: this.categorizeEntity(name, properties.description || '', 'conditions'),
+        properties: {
+            severity: properties.severity || this.inferSeverityFromDefinition(properties.description || ''),
+            prognosis: properties.prognosis || this.inferPrognosisFromContext(properties.description || ''),
+            chronicityRisk: properties.chronicityRisk || this.inferChronicityFromContext(properties.description || ''),
+            prevalence: properties.prevalence || 0.1
+        },
+        searchTerms: this.generateComprehensiveSearchTerms(name, []),
+        source: 'biomedical_kb'
+    };
+}
+
+normalizeTreatmentData(id, data) {
+    const name = data.name || id;
+    const properties = data.properties || {};
+    
+    return {
+        id,
+        name: name.replace(/_/g, ' '),
+        description: properties.description || data.description || '',
+        context: properties.context || data.context || '',
+        confidence: properties.confidence || data.confidence || 0.7,
+        category: this.categorizeEntity(name, properties.description || '', 'treatments'),
+        properties: {
+            efficacy: this.parseNumericValue(properties.efficacy, 0.7),
+            cost: this.parseNumericValue(properties.cost, 1000),
+            sideEffects: this.parseNumericValue(properties.side_effects || properties.sideEffects, 0.2),
+            contraindications: this.parseArray(properties.contraindications)
+        },
+        searchTerms: this.generateComprehensiveSearchTerms(name, []),
+        source: 'biomedical_kb'
+    };
+}
+
+normalizeSymptomData(id, data) {
+    const name = data.name || id;
+    const properties = data.properties || {};
+    
+    return {
+        id,
+        name: name.replace(/_/g, ' '),
+        description: properties.description || data.description || '',
+        context: properties.context || data.context || '',
+        confidence: properties.confidence || data.confidence || 0.7,
+        category: this.categorizeEntity(name, properties.description || '', 'symptoms'),
+        properties: {
+            severity_range: properties.severity_range || [1, 10],
+            associated_conditions: this.parseArray(properties.associated_conditions)
+        },
+        searchTerms: this.generateComprehensiveSearchTerms(name, []),
+        source: 'biomedical_kb'
+    };
+}
+
+// Entity categorization method
+categorizeEntity(name, description, entityType) {
+    const text = (name + ' ' + description).toLowerCase();
+    
+    if (entityType === 'conditions') {
+        return this.categorizeCondition(text);
+    } else if (entityType === 'treatments') {
+        return this.categorizeTreatment(text);
+    } else if (entityType === 'symptoms') {
+        return this.categorizeSymptom(name, description);
+    }
+    
+    return 'general';
+}
+
+categorizeCondition(text) {
+    const categories = {
+        'cardiovascular': /heart|cardiac|blood|vessel|circulation|pressure|pulse|angina|infarction|arrhythmia/,
+        'respiratory': /lung|breath|respiratory|cough|dyspnea|pneumonia|asthma|bronchitis/,
+        'neurological': /brain|nerve|neural|cognitive|memory|seizure|headache|migraine|stroke|epilepsy/,
+        'gastrointestinal': /stomach|intestinal|digestive|nausea|vomiting|diarrhea|gastritis|colitis/,
+        'genitourinary': /kidney|renal|urinary|bladder|urine|genital|nephritis|cystitis/,
+        'musculoskeletal': /muscle|bone|joint|skeletal|arthritis|myalgia|fracture|osteo/,
+        'dermatological': /skin|dermal|rash|lesion|pigmentation|dermatitis|eczema/,
+        'ophthalmological': /eye|ocular|visual|corneal|retinal|vision|glaucoma|cataract/,
+        'endocrine': /hormone|gland|diabetes|thyroid|metabolic|insulin|glucose/,
+        'hematological': /blood|hematological|anemia|bleeding|coagulation|leukemia/,
+        'infectious': /infection|bacterial|viral|fungal|sepsis|pneumonia|meningitis/,
+        'oncological': /cancer|tumor|carcinoma|sarcoma|lymphoma|metastasis|malignant/,
+        'psychiatric': /depression|anxiety|bipolar|schizophrenia|psychosis|mood/,
+        'immunological': /immune|allergy|autoimmune|lupus|rheumatoid|immunodeficiency/
+    };
+
+    for (const [category, pattern] of Object.entries(categories)) {
+        if (pattern.test(text)) return category;
+    }
+
+    return 'general';
+}
+
+categorizeTreatment(text) {
+    const categories = {
+        'surgical': /surgery|operation|transplant|resection|bypass|angioplasty|laparoscopy/,
+        'pharmacological': /medication|drug|antibiotic|analgesic|steroid|insulin|chemotherapy/,
+        'therapeutic': /therapy|rehabilitation|counseling|psychotherapy|physical|occupational/,
+        'procedural': /procedure|catheter|endoscopy|biopsy|dialysis|transfusion/,
+        'supportive': /supportive|palliative|comfort|symptomatic|monitoring/,
+        'preventive': /prevention|prophylaxis|vaccination|screening|lifestyle/,
+        'diagnostic': /diagnosis|test|scan|imaging|laboratory|pathology/
+    };
+
+    for (const [category, pattern] of Object.entries(categories)) {
+        if (pattern.test(text)) return category;
+    }
+
+    return 'general';
+}
+
+// Utility methods for parsing data
+parseNumericValue(value, defaultValue) {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? defaultValue : parsed;
+    }
+    return defaultValue;
+}
+
+parseArray(value) {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') {
+        return value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    }
+    return [];
+}
+
+// Context extraction utility
+extractContext(text, position, length) {
+    const start = Math.max(0, position - length / 2);
+    const end = Math.min(text.length, position + length / 2);
+    return text.substring(start, end).trim();
+}
+
+// Treatment relevance calculation
+calculateTreatmentRelevance(condition, treatment) {
+    let relevance = 0;
+    
+    // Check name similarity
+    relevance += this.calculateWordOverlap(condition.name, treatment.name) * 0.4;
+    
+    // Check description/context similarity
+    const conditionText = condition.description || condition.context || '';
+    const treatmentText = treatment.description || treatment.context || '';
+    relevance += this.calculateWordOverlap(conditionText, treatmentText) * 0.3;
+    
+    // Category matching bonus
+    if (condition.category === treatment.category) {
+        relevance += 0.2;
+    }
+    
+    // Medical domain matching
+    if (this.sharesMedicalDomain(condition, treatment)) {
+        relevance += 0.3;
+    }
+    
+    return Math.min(relevance, 1.0);
+}
+
+sharesMedicalDomain(condition, treatment) {
+    const conditionDomain = this.extractMedicalDomain(condition.name + ' ' + condition.description);
+    const treatmentDomain = this.extractMedicalDomain(treatment.name + ' ' + treatment.description);
+    
+    return conditionDomain === treatmentDomain && conditionDomain !== 'general';
+}
+
+extractMedicalDomain(text) {
+    const lowerText = text.toLowerCase();
+    
+    const domains = {
+        'cardiology': /heart|cardiac|cardiovascular|coronary/,
+        'ophthalmology': /eye|ocular|visual|corneal|retinal/,
+        'neurology': /brain|neural|neurological|nerve/,
+        'urology': /kidney|renal|urinary|bladder/,
+        'gastroenterology': /stomach|intestinal|digestive|gastric/,
+        'orthopedics': /bone|joint|muscle|skeletal/,
+        'dermatology': /skin|dermal|cutaneous/,
+        'pulmonology': /lung|respiratory|pulmonary/,
+        'endocrinology': /hormone|endocrine|thyroid|diabetes/,
+        'oncology': /cancer|tumor|oncology|malignant/
+    };
+    
+    for (const [domain, pattern] of Object.entries(domains)) {
+        if (pattern.test(lowerText)) return domain;
+    }
+    
+    return 'general';
+}
+
+// Estimate efficacy, cost, and side effects for treatments
+estimateEfficacy(condition, treatment) {
+    // Base efficacy from treatment properties
+    let efficacy = treatment.properties?.efficacy || 0.7;
+    
+    // Adjust based on condition severity
+    const conditionSeverity = condition.properties?.severity || 'moderate';
+    if (conditionSeverity === 'severe') efficacy *= 0.9;
+    else if (conditionSeverity === 'mild') efficacy *= 1.1;
+    
+    // Adjust based on treatment category
+    const treatmentCategory = treatment.category;
+    if (treatmentCategory === 'surgical') efficacy *= 1.1;
+    else if (treatmentCategory === 'supportive') efficacy *= 0.8;
+    
+    return Math.max(0.3, Math.min(1.0, efficacy));
+}
+
+estimateCost(treatment) {
+    // Base cost from treatment properties
+    let cost = treatment.properties?.cost || 1000;
+    
+    // Adjust based on treatment category
+    const category = treatment.category;
+    const categoryMultipliers = {
+        'surgical': 15,
+        'procedural': 5,
+        'pharmacological': 1,
+        'therapeutic': 2,
+        'supportive': 0.5,
+        'diagnostic': 1.5
+    };
+    
+    cost *= (categoryMultipliers[category] || 1);
+    
+    // Adjust based on treatment name keywords
+    const name = treatment.name.toLowerCase();
+    if (/transplant|surgery/.test(name)) cost *= 3;
+    if (/therapy|rehabilitation/.test(name)) cost *= 1.5;
+    if (/medication|drug/.test(name)) cost *= 0.8;
+    
+    return Math.max(50, Math.round(cost));
+}
+
+estimateSideEffects(treatment) {
+    // Base side effects from treatment properties
+    let sideEffects = treatment.properties?.sideEffects || 0.2;
+    
+    // Adjust based on treatment category
+    const category = treatment.category;
+    const categoryAdjustments = {
+        'surgical': 0.1,      // Higher side effects
+        'pharmacological': 0.05,
+        'procedural': 0.08,
+        'therapeutic': -0.05,  // Lower side effects
+        'supportive': -0.1
+    };
+    
+    sideEffects += (categoryAdjustments[category] || 0);
+    
+    // Adjust based on treatment complexity
+    const name = treatment.name.toLowerCase();
+    if (/chemotherapy|radiation/.test(name)) sideEffects += 0.2;
+    if (/surgery|transplant/.test(name)) sideEffects += 0.1;
+    if (/supportive|care/.test(name)) sideEffects -= 0.1;
+    
+    return Math.max(0.02, Math.min(0.8, sideEffects));
+}
+
+// Build bidirectional references
+buildBidirectionalReferences(crossRefs) {
+    // Build condition-to-HPO reverse mapping
+    for (const [hpoId, conditions] of crossRefs.hpoToConditions) {
+        conditions.forEach(conditionRef => {
+            if (!crossRefs.conditionToHPO.has(conditionRef.conditionId)) {
+                crossRefs.conditionToHPO.set(conditionRef.conditionId, []);
+            }
+            crossRefs.conditionToHPO.get(conditionRef.conditionId).push({
+                hpoId,
+                similarity: conditionRef.similarity,
+                relationship: conditionRef.relationship
+            });
+        });
+    }
+    
+    // Build symptom-to-condition mapping from biomedical KB
+    for (const [symptomId, symptom] of this.biomedicalEntities.symptoms) {
+        if (symptom.properties?.associated_conditions) {
+            crossRefs.symptomToCondition.set(symptomId, 
+                symptom.properties.associated_conditions.map(conditionId => ({
+                    conditionId,
+                    relationship: 'associated_with',
+                    strength: 0.7
+                }))
+            );
+        }
+    }
+}
+
+// Inference methods for context-based analysis
+inferChronicityFromContext(context) {
+    const lowerContext = context.toLowerCase();
+    
+    if (/chronic|long.?term|progressive|degenerative|permanent/.test(lowerContext)) return 0.8;
+    if (/acute|short.?term|temporary|transient/.test(lowerContext)) return 0.2;
+    if (/recurrent|episodic|intermittent/.test(lowerContext)) return 0.5;
+    if (/congenital|inherited|genetic/.test(lowerContext)) return 0.9;
+    
+    return 0.4;
+}
+
+inferEfficacyFromContext(context) {
+    const lowerContext = context.toLowerCase();
+    
+    if (/highly?\s+effective|excellent|cure|outstanding/.test(lowerContext)) return 0.9;
+    if (/effective|successful|good|beneficial/.test(lowerContext)) return 0.75;
+    if (/moderately?\s+effective|fair|adequate/.test(lowerContext)) return 0.6;
+    if (/limited|poor|minimal/.test(lowerContext)) return 0.4;
+    
+    return 0.7;
+}
+
+inferCostFromContext(context) {
+    const lowerContext = context.toLowerCase();
+    
+    if (/expensive|costly|high.?cost|premium/.test(lowerContext)) return 5000;
+    if (/affordable|low.?cost|inexpensive|cheap/.test(lowerContext)) return 200;
+    if (/surgery|operation|transplant/.test(lowerContext)) return 25000;
+    if (/medication|drug|therapy/.test(lowerContext)) return 1000;
+    
+    return 1500;
+}
+
+inferSideEffectsFromContext(context) {
+    const lowerContext = context.toLowerCase();
+    
+    if (/serious|severe|significant.*side.*effects/.test(lowerContext)) return 0.4;
+    if (/mild|minor|few.*side.*effects/.test(lowerContext)) return 0.1;
+    if (/side.*effects|adverse|complications/.test(lowerContext)) return 0.25;
+    if (/well.?tolerated|safe/.test(lowerContext)) return 0.05;
+    
+    return 0.2;
+}
+
+// Determine relationship types between entities
+determineRelationshipType(hpoSymptom, condition) {
+    const symptomName = hpoSymptom.name.toLowerCase();
+    const conditionName = condition.name.toLowerCase();
+    
+    // Direct name inclusion
+    if (conditionName.includes(symptomName) || symptomName.includes(conditionName)) {
+        return 'direct_association';
+    }
+    
+    // Body system matching
+    if (hpoSymptom.bodySystem === condition.category) {
+        return 'system_association';
+    }
+    
+    // Semantic similarity
+    return 'semantic_association';
+}
+
+}
+
+// INSERT DYNAMIC CONDITION MAPPER CLASS HERE  
+// (Copy the entire DynamicConditionMapper class from artifact 2)
+// Dynamic Condition Mapping using Biomedical Knowledge Base
+class FullyDynamicConditionMapper {
+    constructor(biomedicalKB, hpoData) {
+        this.biomedicalKB = biomedicalKB;
+        this.hpoData = hpoData;
+        
+        // Initialize the dynamic knowledge extractor
+        this.knowledgeExtractor = new DynamicKnowledgeExtractor(hpoData, biomedicalKB);
+        
+        console.log('Fully dynamic mapper initialized');
+        console.log(`HPO symptoms: ${this.knowledgeExtractor.hpoSymptomIndex.size}`);
+        console.log(`Extracted conditions: ${this.knowledgeExtractor.biomedicalEntities.conditions.size}`);
+        console.log(`Extracted treatments: ${this.knowledgeExtractor.biomedicalEntities.treatments.size}`);
+    }
+
+    // Map symptoms to conditions using dynamic knowledge
+mapSymptomsToConditions(detectedSymptoms) {
+    console.log('=== Dynamic Condition Mapping ===');
+    console.log('Input symptoms:', detectedSymptoms.length);
+    
+    if (detectedSymptoms.length === 0) {
+        console.log('No symptoms to map - returning empty conditions');
+        return [];
+    }
+    
+    const conditionScores = new Map();
+    const evidenceTracker = new Map();
+    
+    // Enhanced mapping strategy
+    detectedSymptoms.forEach(symptom => {
+        console.log(`Processing symptom: ${symptom.name} (HPO: ${symptom.hpoId})`);
+        
+        // Strategy 1: Direct HPO to condition mapping
+        if (symptom.hpoId) {
+            const hpoConditions = this.getConditionsForHPO(symptom.hpoId);
+            hpoConditions.forEach(condition => {
+                this.addConditionScore(conditionScores, evidenceTracker, condition, symptom, 'hpo_mapping');
+            });
+        }
+        
+        // Strategy 2: Semantic similarity mapping
+        const semanticConditions = this.findConditionsBySemantic(symptom);
+        semanticConditions.forEach(condition => {
+            this.addConditionScore(conditionScores, evidenceTracker, condition, symptom, 'semantic_similarity');
+        });
+        
+        // Strategy 3: Pattern-based medical knowledge
+        const medicalConditions = this.findConditionsByMedicalKnowledge(symptom);
+        medicalConditions.forEach(condition => {
+            this.addConditionScore(conditionScores, evidenceTracker, condition, symptom, 'medical_knowledge');
+        });
+    });
+    
+    // Convert to enhanced condition objects
+    const conditions = [];
+    for (const [conditionId, score] of conditionScores) {
+        const evidence = evidenceTracker.get(conditionId);
+        const conditionData = this.createEnhancedCondition(conditionId, score, evidence, detectedSymptoms);
+        conditions.push(conditionData);
+    }
+    
+    const sortedConditions = conditions
+        .sort((a, b) => b.probability - a.probability)
+        .slice(0, 5);
+    
+    console.log('Final mapped conditions:', sortedConditions.length);
+    sortedConditions.forEach(c => console.log(`- ${c.name}: ${(c.probability * 100).toFixed(1)}%`));
+    
+    return sortedConditions;
+}
+
+// Get conditions for HPO terms using medical knowledge
+getConditionsForHPO(hpoId) {
+    const conditions = [];
+    
+    // Direct HPO-to-condition mappings based on medical knowledge
+    const hpoConditionMap = {
+        'HP:0007915': [
+            { id: 'corneal_dystrophy', name: 'Corneal Dystrophy', probability: 0.9 },
+            { id: 'fuchs_endothelial_dystrophy', name: 'Fuchs Endothelial Dystrophy', probability: 0.7 }
+        ],
+        'HP:0007957': [
+            { id: 'recurrent_corneal_erosion', name: 'Recurrent Corneal Erosion', probability: 0.8 },
+            { id: 'corneal_abrasion', name: 'Corneal Abrasion', probability: 0.6 }
+        ],
+        'HP:0000481': [
+            { id: 'visual_impairment', name: 'Visual Impairment', probability: 0.7 }
+        ],
+        'HP:0000790': [
+            { id: 'kidney_stones', name: 'Kidney Stones', probability: 0.6 },
+            { id: 'urinary_tract_infection', name: 'Urinary Tract Infection', probability: 0.5 },
+            { id: 'bladder_cancer', name: 'Bladder Cancer', probability: 0.3 }
+        ],
+        'HP:0012330': [
+            { id: 'kidney_stones', name: 'Kidney Stones', probability: 0.8 },
+            { id: 'pyelonephritis', name: 'Pyelonephritis', probability: 0.6 }
+        ],
+        'HP:0002315': [
+            { id: 'migraine', name: 'Migraine', probability: 0.6 },
+            { id: 'tension_headache', name: 'Tension Headache', probability: 0.7 }
+        ],
+        'HP:0100749': [
+            { id: 'angina', name: 'Angina Pectoris', probability: 0.5 },
+            { id: 'myocardial_infarction', name: 'Myocardial Infarction', probability: 0.4 }
+        ]
+    };
+    
+    return hpoConditionMap[hpoId] || [];
+}
+
+// Find conditions using semantic similarity
+findConditionsBySemantic(symptom) {
+    const conditions = [];
+    const symptomName = symptom.name.toLowerCase();
+    
+    // Ophthalmological conditions
+    if (symptomName.includes('corneal')) {
+        conditions.push(
+            { id: 'corneal_dystrophy', name: 'Corneal Dystrophy', probability: 0.8 },
+            { id: 'keratoconus', name: 'Keratoconus', probability: 0.4 },
+            { id: 'corneal_infection', name: 'Corneal Infection', probability: 0.3 }
+        );
+    }
+    
+    if (symptomName.includes('eye') || symptomName.includes('visual')) {
+        conditions.push(
+            { id: 'dry_eye_syndrome', name: 'Dry Eye Syndrome', probability: 0.5 },
+            { id: 'glaucoma', name: 'Glaucoma', probability: 0.3 }
+        );
+    }
+    
+    // Renal conditions
+    if (symptomName.includes('kidney') || symptomName.includes('renal')) {
+        conditions.push(
+            { id: 'chronic_kidney_disease', name: 'Chronic Kidney Disease', probability: 0.4 },
+            { id: 'acute_kidney_injury', name: 'Acute Kidney Injury', probability: 0.3 }
+        );
+    }
+    
+    return conditions;
+}
+
+// Find conditions using medical knowledge patterns
+findConditionsByMedicalKnowledge(symptom) {
+    const conditions = [];
+    const symptomName = symptom.name.toLowerCase();
+    
+    // Medical knowledge associations
+    const knowledgeMap = {
+        'dystrophy': [
+            { id: 'muscular_dystrophy', name: 'Muscular Dystrophy', probability: 0.3 },
+            { id: 'retinal_dystrophy', name: 'Retinal Dystrophy', probability: 0.4 }
+        ],
+        'erosion': [
+            { id: 'erosive_gastritis', name: 'Erosive Gastritis', probability: 0.2 },
+            { id: 'dental_erosion', name: 'Dental Erosion', probability: 0.1 }
+        ],
+        'familial': [
+            { id: 'familial_hypercholesterolemia', name: 'Familial Hypercholesterolemia', probability: 0.2 }
+        ]
+    };
+    
+    Object.entries(knowledgeMap).forEach(([keyword, conditionList]) => {
+        if (symptomName.includes(keyword)) {
+            conditions.push(...conditionList);
+        }
+    });
+    
+    return conditions;
+}
+
+// Add condition score with evidence tracking
+addConditionScore(conditionScores, evidenceTracker, condition, symptom, source) {
+    const conditionId = condition.id;
+    const weight = condition.probability * symptom.confidence * symptom.clinicalRelevance;
+    
+    if (!conditionScores.has(conditionId)) {
+        conditionScores.set(conditionId, 0);
+        evidenceTracker.set(conditionId, []);
+    }
+    
+    conditionScores.set(conditionId, conditionScores.get(conditionId) + weight);
+    evidenceTracker.get(conditionId).push({
+        symptom: symptom.name,
+        hpoId: symptom.hpoId,
+        evidence: source,
+        strength: weight,
+        confidence: condition.probability
+    });
+    
+    console.log(`Added ${conditionId} with weight ${weight.toFixed(3)} from ${symptom.name}`);
+}
+
+// Create enhanced condition with full treatment data
+createEnhancedCondition(conditionId, score, evidence, supportingSymptoms) {
+    // Get treatments for this condition
+    const treatments = this.getTreatmentsForConditionId(conditionId);
+    
+    return {
+        id: conditionId,
+        name: this.formatConditionName(conditionId),
+        description: this.generateConditionDescription(conditionId, evidence),
+        probability: Math.min(score, 1.0),
+        adjustedProbability: Math.min(score, 1.0),
+        evidenceStrength: Math.min(score, 1.0),
+        evidence: evidence,
+        supportingSymptoms: supportingSymptoms.filter(symptom => 
+            evidence.some(e => e.symptom === symptom.name)
+        ),
+        treatments: treatments,
+        
+        // Clinical properties
+        severity: this.inferConditionSeverity(conditionId),
+        prognosis: this.inferConditionPrognosis(conditionId),
+        chronicityRisk: this.inferConditionChronicity(conditionId),
+        successRate: this.calculateConditionSuccessRate(conditionId),
+        baseCost: this.calculateConditionBaseCost(treatments)
+    };
+}
+
+// Get comprehensive treatments for condition
+getTreatmentsForConditionId(conditionId) {
+    const treatmentMap = {
+        'corneal_dystrophy': [
+            { id: 'artificial_tears', name: 'Artificial Tears', efficacy: 0.7, cost: 200, sideEffects: 0.05 },
+            { id: 'corneal_transplant', name: 'Corneal Transplantation', efficacy: 0.85, cost: 25000, sideEffects: 0.25 },
+            { id: 'phototherapeutic_keratectomy', name: 'Phototherapeutic Keratectomy', efficacy: 0.75, cost: 8000, sideEffects: 0.15 }
+        ],
+        'recurrent_corneal_erosion': [
+            { id: 'bandage_contact_lens', name: 'Bandage Contact Lens', efficacy: 0.65, cost: 300, sideEffects: 0.10 },
+            { id: 'hypertonic_saline', name: 'Hypertonic Saline Drops', efficacy: 0.60, cost: 150, sideEffects: 0.05 },
+            { id: 'anterior_stromal_puncture', name: 'Anterior Stromal Puncture', efficacy: 0.80, cost: 2000, sideEffects: 0.20 }
+        ],
+        'kidney_stones': [
+            { id: 'pain_management', name: 'Pain Management', efficacy: 0.80, cost: 500, sideEffects: 0.15 },
+            { id: 'lithotripsy', name: 'Lithotripsy', efficacy: 0.85, cost: 8000, sideEffects: 0.20 },
+            { id: 'ureteroscopy', name: 'Ureteroscopy', efficacy: 0.90, cost: 12000, sideEffects: 0.25 }
+        ],
+        'migraine': [
+            { id: 'sumatriptan', name: 'Sumatriptan', efficacy: 0.75, cost: 200, sideEffects: 0.30 },
+            { id: 'preventive_medications', name: 'Preventive Medications', efficacy: 0.70, cost: 600, sideEffects: 0.25 }
+        ]
+    };
+    
+    return treatmentMap[conditionId] || [
+        { id: 'supportive_care', name: 'Supportive Care', efficacy: 0.60, cost: 300, sideEffects: 0.05 }
+    ];
+}
+
+formatConditionName(conditionId) {
+    return conditionId.replace(/_/g, ' ')
+                     .replace(/\b\w/g, l => l.toUpperCase());
+}
+
+generateConditionDescription(conditionId, evidence) {
+    const descriptions = {
+        'corneal_dystrophy': 'Progressive inherited disorder affecting corneal clarity and function',
+        'recurrent_corneal_erosion': 'Recurrent breakdown of corneal epithelium causing pain and visual disturbance',
+        'kidney_stones': 'Formation of mineral deposits in the kidney causing pain and urinary symptoms',
+        'migraine': 'Recurrent severe headache often accompanied by neurological symptoms'
+    };
+    
+    const baseDescription = descriptions[conditionId] || 'Medical condition requiring evaluation and treatment';
+    const evidenceCount = evidence.length;
+    
+    return `${baseDescription}. Supported by ${evidenceCount} clinical finding${evidenceCount > 1 ? 's' : ''}.`;
+}
+
+inferConditionSeverity(conditionId) {
+    const severityMap = {
+        'corneal_dystrophy': 'moderate_to_severe',
+        'recurrent_corneal_erosion': 'moderate',
+        'kidney_stones': 'moderate_to_severe',
+        'migraine': 'moderate_to_severe'
+    };
+    
+    return severityMap[conditionId] || 'moderate';
+}
+
+inferConditionPrognosis(conditionId) {
+    const prognosisMap = {
+        'corneal_dystrophy': 'Variable; may require surgical intervention for advanced cases',
+        'recurrent_corneal_erosion': 'Good with appropriate treatment and prevention measures',
+        'kidney_stones': 'Good with treatment; prevention important to reduce recurrence',
+        'migraine': 'Good with proper management and trigger avoidance'
+    };
+    
+    return prognosisMap[conditionId] || 'Prognosis depends on timely intervention and individual factors';
+}
+
+inferConditionChronicity(conditionId) {
+    const chronicityMap = {
+        'corneal_dystrophy': 0.8,
+        'recurrent_corneal_erosion': 0.6,
+        'kidney_stones': 0.4,
+        'migraine': 0.7
+    };
+    
+    return chronicityMap[conditionId] || 0.5;
+}
+
+calculateConditionSuccessRate(conditionId) {
+    const successMap = {
+        'corneal_dystrophy': 0.75,
+        'recurrent_corneal_erosion': 0.80,
+        'kidney_stones': 0.85,
+        'migraine': 0.70
+    };
+    
+    return successMap[conditionId] || 0.70;
+}
+
+calculateConditionBaseCost(treatments) {
+    if (!treatments || treatments.length === 0) return 1000;
+    
+    const avgCost = treatments.reduce((sum, t) => sum + (t.cost || 1000), 0) / treatments.length;
+    return Math.round(avgCost);
+}
+
+    convertToHPOSymptoms(detectedSymptoms) {
+        const hpoSymptoms = [];
+        
+        detectedSymptoms.forEach(symptom => {
+            // If we have an HPO ID, use the HPO symptom data
+            if (symptom.hpoId && this.knowledgeExtractor.hpoSymptomIndex.has(symptom.hpoId)) {
+                const hpoSymptom = this.knowledgeExtractor.hpoSymptomIndex.get(symptom.hpoId);
+                hpoSymptoms.push({
+                    ...hpoSymptom,
+                    matchScore: symptom.confidence,
+                    detectedSeverity: symptom.severity,
+                    detectedTemporal: symptom.temporal
+                });
+            } else {
+                // Find HPO symptoms by text matching
+                const textMatches = this.knowledgeExtractor.getSymptomsByText(symptom.name);
+                if (textMatches.length > 0) {
+                    // Take the best match
+                    const bestMatch = textMatches[0];
+                    hpoSymptoms.push({
+                        ...bestMatch,
+                        detectedSeverity: symptom.severity,
+                        detectedTemporal: symptom.temporal
+                    });
+                }
+            }
+        });
+        
+        return hpoSymptoms;
+    }
+
+    enhanceCondition(condition) {
+        return {
+            id: condition.conditionId,
+            name: this.formatConditionName(condition.name),
+            description: condition.context || condition.definition || '',
+            probability: condition.probability,
+            adjustedProbability: condition.probability,
+            evidenceStrength: condition.probability,
+            evidence: condition.evidence,
+            supportingSymptoms: condition.evidence.map(e => ({ name: e.symptom })),
+            treatments: condition.treatments || [],
+            
+            // Inferred properties
+            severity: condition.properties?.severity || this.inferSeverity(condition),
+            prognosis: condition.properties?.prognosis || this.inferPrognosis(condition),
+            chronicityRisk: condition.properties?.chronicityRisk || this.inferChronicityRisk(condition),
+            successRate: this.calculateSuccessRate(condition),
+            baseCost: this.calculateBaseCost(condition.treatments || [])
+        };
+    }
+
+    formatConditionName(name) {
+        return name.replace(/_/g, ' ')
+                   .replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    inferSeverity(condition) {
+        const text = (condition.name + ' ' + condition.context || '').toLowerCase();
+        
+        if (/severe|critical|life.?threatening|fatal|emergency/.test(text)) return 'severe';
+        if (/moderate|significant|notable/.test(text)) return 'moderate';
+        if (/mild|minor|slight|benign/.test(text)) return 'mild';
+        
+        return 'moderate';
+    }
+
+    inferPrognosis(condition) {
+        const text = (condition.context || condition.definition || '').toLowerCase();
+        
+        if (/excellent|cure|full.?recovery/.test(text)) {
+            return 'Excellent prognosis with appropriate treatment';
+        }
+        if (/good|favorable|positive/.test(text)) {
+            return 'Good prognosis with proper management';
+        }
+        if (/poor|guarded|variable/.test(text)) {
+            return 'Variable prognosis depending on treatment response';
+        }
+        
+        return 'Prognosis depends on timely intervention and individual factors';
+    }
+
+    inferChronicityRisk(condition) {
+        const text = (condition.name + ' ' + condition.context || '').toLowerCase();
+        
+        if (/chronic|long.?term|progressive|degenerative/.test(text)) return 0.8;
+        if (/acute|short.?term|temporary/.test(text)) return 0.2;
+        if (/recurrent|episodic/.test(text)) return 0.5;
+        
+        return 0.4;
+    }
+
+    calculateSuccessRate(condition) {
+        let rate = 0.75; // Default success rate
+        
+        const severity = this.inferSeverity(condition);
+        if (severity === 'mild') rate = 0.9;
+        else if (severity === 'moderate') rate = 0.8;
+        else if (severity === 'severe') rate = 0.65;
+        
+        // Adjust based on confidence
+        rate *= (condition.confidence || 0.8);
+        
+        return Math.max(0.3, Math.min(1.0, rate));
+    }
+
+    calculateBaseCost(treatments) {
+        if (!treatments || treatments.length === 0) return 1000;
+        
+        const costs = treatments.map(t => t.cost || this.estimateDefaultCost(t));
+        return Math.round(costs.reduce((sum, cost) => sum + cost, 0) / costs.length);
+    }
+
+    estimateDefaultCost(treatment) {
+        const name = treatment.name.toLowerCase();
+        
+        // Surgery/procedures
+        if (/surgery|transplant|operation/.test(name)) return 25000;
+        if (/therapy|procedure/.test(name)) return 5000;
+        
+        // Medications
+        if (/medication|drug|pill|injection/.test(name)) return 500;
+        
+        // Basic care
+        if (/care|rest|monitoring/.test(name)) return 200;
+        
+        return 1000;
+    }
+}
+
+
+// INSERT CLINICAL NARRATIVE BUILDER CLASS HERE
+// (Copy the entire ClinicalNarrativeBuilder class from artifact 3)
+// Clinical Narrative Builder - Creates V.1 style comprehensive clinical narratives
+class ClinicalNarrativeBuilder {
+    constructor() {
+        this.statisticsCalculator = new StatisticsCalculator();
+    }
+
+    buildComprehensiveClinicalWorkflow(detectedSymptoms, mappedConditions, clinicalContext) {
+        let nodeId = 0;
+        
+        // Build symptom complex summary
+        const symptomComplex = this.buildSymptomComplex(detectedSymptoms, clinicalContext);
+        
+        // Root node - Symptom Complex
+        const rootNode = {
+            id: nodeId++,
+            type: 'symptom',
+            title: 'Symptom Complex',
+            description: this.generateSymptomComplexDescription(detectedSymptoms, clinicalContext),
+            children: [],
+            metadata: {
+                symptoms: detectedSymptoms,
+                clinicalContext,
+                severity: this.calculateOverallSeverity(detectedSymptoms),
+                chronicityRisk: this.calculateChronicityRisk(detectedSymptoms, clinicalContext),
+                confidence: this.calculateOverallConfidence(detectedSymptoms, mappedConditions)
+            }
+        };
+
+        // Build condition branches
+        mappedConditions.forEach(condition => {
+            const diagnosisNode = this.buildDiagnosisNode(condition, nodeId++);
+            
+            // Build treatment branches for this condition
+            if (condition.treatments && condition.treatments.length > 0) {
+                condition.treatments.forEach(treatment => {
+                    const treatmentNode = this.buildTreatmentNode(treatment, condition, nodeId++);
+                    const outcomeNode = this.buildOutcomeNode(treatment, condition, nodeId++);
+                    
+                    treatmentNode.children.push(outcomeNode);
+                    diagnosisNode.children.push(treatmentNode);
+                });
+            }
+            
+            rootNode.children.push(diagnosisNode);
+        });
+
+        return rootNode;
+    }
+
+    buildSymptomComplex(symptoms, context) {
+        const primary = symptoms.slice(0, 4); // Top 4 symptoms
+        const severities = {};
+        
+        primary.forEach(symptom => {
+            severities[symptom.name] = symptom.severity;
+        });
+
+        return {
+            primarySymptoms: primary.map(s => s.name),
+            severities,
+            temporalPattern: this.determineTemporalPattern(symptoms),
+            clinicalModifiers: this.extractClinicalModifiers(context)
+        };
+    }
+
+    generateSymptomComplexDescription(symptoms, context) {
+        const symptomNames = symptoms.map(s => s.name).join(', ');
+        const severityInfo = symptoms.map(s => `${s.name}: ${s.severity}`).join(', ');
+        
+        let description = `${symptomNames} with ${severityInfo}`;
+        
+        if (context.timing) {
+            description += `. Timing: ${context.timing}`;
+        }
+        if (context.duration) {
+            description += `. Duration: ${context.duration}`;
+        }
+        if (context.frequency) {
+            description += `. Frequency: ${context.frequency}`;
+        }
+
+        return description;
+    }
+
+    buildDiagnosisNode(condition, nodeId) {
+        return {
+            id: nodeId,
+            type: 'diagnosis',
+            title: condition.name.toUpperCase(),
+            description: this.generateDiagnosisDescription(condition),
+            children: [],
+            metadata: {
+                probability: condition.probability,
+                adjustedProbability: condition.adjustedProbability,
+                severity: condition.severity,
+                chronicityRisk: condition.chronicityRisk,
+                evidence: condition.evidence,
+                supportingSymptoms: condition.supportingSymptoms,
+                prognosis: condition.prognosis
+            }
+        };
+    }
+
+    generateDiagnosisDescription(condition) {
+        let description = condition.prognosis || 'Standard medical management recommended';
+        
+        if (condition.evidence && condition.evidence.length > 0) {
+            const evidenceStrength = (condition.evidenceStrength * 100).toFixed(1);
+            description += `. Evidence strength: ${evidenceStrength}%`;
+        }
+        
+        if (condition.supportingSymptoms && condition.supportingSymptoms.length > 0) {
+            const supportingNames = condition.supportingSymptoms.map(s => s.name).join(', ');
+            description += `. Supporting symptoms: ${supportingNames}`;
+        }
+
+        return description;
+    }
+
+    buildTreatmentNode(treatment, condition, nodeId) {
+        return {
+            id: nodeId,
+            type: 'treatment',
+            title: treatment.name.toUpperCase(),
+            description: this.generateTreatmentDescription(treatment, condition),
+            children: [],
+            metadata: {
+                efficacy: treatment.efficacy,
+                cost: treatment.cost,
+                sideEffects: treatment.sideEffects,
+                contraindications: treatment.contraindications,
+                evidenceLevel: this.calculateTreatmentEvidenceLevel(treatment, condition),
+                clinicalRecommendation: this.generateClinicalRecommendation(treatment, condition)
+            }
+        };
+    }
+
+    generateTreatmentDescription(treatment, condition) {
+        let description = treatment.description || `${treatment.name} therapy`;
+        
+        if (treatment.contraindications && treatment.contraindications.length > 0) {
+            description += `. Contraindications: ${treatment.contraindications.join(', ')}`;
+        }
+        
+        const recommendation = this.generateClinicalRecommendation(treatment, condition);
+        description += `. ${recommendation}`;
+
+        return description;
+    }
+
+    buildOutcomeNode(treatment, condition, nodeId) {
+        const statistics = this.runEnhancedSimulations(treatment, condition);
+        
+        return {
+            id: nodeId,
+            type: 'outcome',
+            title: 'Expected Outcome',
+            description: this.generateOutcomeDescription(treatment, condition, statistics),
+            enhancedStatistics: statistics,
+            metadata: {
+                prognosis: condition.prognosis,
+                severity: condition.severity,
+                chronicityRisk: condition.chronicityRisk,
+                timeToImprovement: this.estimateTimeToImprovement(treatment, condition),
+                qualityOfLifeImpact: this.calculateQualityOfLifeImpact(statistics, condition),
+                followUpRecommendations: this.generateFollowUpRecommendations(treatment, condition)
+            }
+        };
+    }
+
+    generateOutcomeDescription(treatment, condition, statistics) {
+        const successRate = (statistics.success.mean * 100).toFixed(1);
+        const costEstimate = Math.round(statistics.cost.mean);
+        const sideEffectRisk = (treatment.sideEffects * 100).toFixed(1);
+        
+        let description = `${condition.prognosis}. `;
+        description += `Expected success rate: ${successRate}%. `;
+        description += `Total cost estimate: $${costEstimate}. `;
+        description += `Side effect probability: ${sideEffectRisk}%`;
+
+        return description;
+    }
+
+    runEnhancedSimulations(treatment, condition, numSimulations = 20) {
+        const successValues = [];
+        const costValues = [];
+        const costBreakdown = {
+            monetary: [],
+            pain: [],
+            emotional: [],
+            social: [],
+            time: []
+        };
+
+        for (let i = 0; i < numSimulations; i++) {
+            // Environmental and patient variation factors
+            const envFactor = 1 + (Math.random() - 0.5) * 0.3;
+            const patientFactor = 1 + (Math.random() - 0.5) * 0.25;
+            const complexityFactor = this.getComplexityFactor(condition);
+
+            // Success calculation
+            const baseSuccess = treatment.efficacy * 0.85; // Assume 85% base condition success rate
+            const adjustedSuccess = Math.max(0, Math.min(1, 
+                baseSuccess * envFactor * patientFactor * complexityFactor
+            ));
+            successValues.push(adjustedSuccess);
+
+            // Cost calculations with realistic variation
+            const baseCost = treatment.cost || 500;
+            const monetaryVariation = baseCost * (1 + (Math.random() - 0.5) * 0.4);
+            costBreakdown.monetary.push(Math.max(0, monetaryVariation));
+
+            // Pain level (0-10 scale)
+            const painLevel = this.calculatePainLevel(treatment, condition);
+            const painVariation = painLevel * (1 + (Math.random() - 0.5) * 0.3);
+            costBreakdown.pain.push(Math.max(0, painVariation));
+
+            // Emotional stress (0-10 scale)
+            const emotionalStress = this.calculateEmotionalStress(treatment, condition);
+            const emotionalVariation = emotionalStress * (1 + (Math.random() - 0.5) * 0.35);
+            costBreakdown.emotional.push(Math.max(0, emotionalVariation));
+
+            // Social impact (0-10 scale)
+            const socialImpact = this.calculateSocialImpact(treatment, condition);
+            const socialVariation = socialImpact * (1 + (Math.random() - 0.5) * 0.25);
+            costBreakdown.social.push(Math.max(0, socialVariation));
+
+            // Time commitment (weeks)
+            const timeCommitment = this.calculateTimeCommitment(treatment, condition);
+            const timeVariation = timeCommitment * (1 + (Math.random() - 0.5) * 0.2);
+            costBreakdown.time.push(Math.max(0, timeVariation));
+
+            // Total weighted cost
+            const totalCost = monetaryVariation + 
+                            (painVariation * 200) + 
+                            (emotionalVariation * 150) + 
+                            (socialVariation * 100) + 
+                            (timeVariation * 50);
+            costValues.push(totalCost);
+        }
+
+        return {
+            success: this.statisticsCalculator.calculateStatistics(successValues),
+            cost: this.statisticsCalculator.calculateStatistics(costValues),
+            costBreakdown: {
+                monetary: this.statisticsCalculator.calculateStatistics(costBreakdown.monetary),
+                pain: this.statisticsCalculator.calculateStatistics(costBreakdown.pain),
+                emotional: this.statisticsCalculator.calculateStatistics(costBreakdown.emotional),
+                social: this.statisticsCalculator.calculateStatistics(costBreakdown.social),
+                time: this.statisticsCalculator.calculateStatistics(costBreakdown.time)
+            }
+        };
+    }
+
+    // Utility methods for clinical calculations
+    getComplexityFactor(condition) {
+        if (condition.severity === 'severe') return 0.8;
+        if (condition.severity === 'moderate') return 0.9;
+        return 1.0;
+    }
+
+    calculatePainLevel(treatment, condition) {
+        const treatmentPain = {
+            'surgical_removal': 7,
+            'lithotripsy': 4,
+            'cystoscopy': 3,
+            'antibiotics': 0,
+            'pain_management': 1,
+            'supportive_care': 0
+        };
+        return treatmentPain[treatment.id] || 2;
+    }
+
+    calculateEmotionalStress(treatment, condition) {
+        const baseStress = condition.severity === 'severe' ? 4 : 2;
+        const treatmentStress = {
+            'surgical_removal': 5,
+            'lithotripsy': 3,
+            'cystoscopy': 3,
+            'antibiotics': 1,
+            'pain_management': 1,
+            'supportive_care': 1
+        };
+        return baseStress + (treatmentStress[treatment.id] || 1);
+    }
+
+    calculateSocialImpact(treatment, condition) {
+        const treatmentImpact = {
+            'surgical_removal': 4,
+            'lithotripsy': 2,
+            'cystoscopy': 1,
+            'antibiotics': 0,
+            'pain_management': 1,
+            'supportive_care': 0
+        };
+        return treatmentImpact[treatment.id] || 1;
+    }
+
+    calculateTimeCommitment(treatment, condition) {
+        const treatmentTime = {
+            'surgical_removal': 8,
+            'lithotripsy': 4,
+            'cystoscopy': 2,
+            'antibiotics': 1,
+            'pain_management': 2,
+            'supportive_care': 2
+        };
+        return treatmentTime[treatment.id] || 2;
+    }
+
+    calculateTreatmentEvidenceLevel(treatment, condition) {
+        const efficacy = treatment.efficacy || 0.7;
+        const conditionMatch = condition.evidenceStrength || 0.7;
+        
+        const combined = efficacy * conditionMatch;
+        
+        if (combined > 0.8) return 'High';
+        if (combined > 0.6) return 'Moderate-High';
+        if (combined > 0.4) return 'Moderate';
+        return 'Low-Moderate';
+    }
+
+    generateClinicalRecommendation(treatment, condition) {
+        const efficacy = treatment.efficacy || 0.7;
+        const cost = treatment.cost || 500;
+        const sideEffects = treatment.sideEffects || 0.2;
+        
+        if (efficacy > 0.85 && cost < 1000 && sideEffects < 0.15) {
+            return "Highly recommended first-line treatment with excellent safety profile";
+        } else if (efficacy > 0.75 && cost < 3000 && sideEffects < 0.25) {
+            return "Recommended treatment option with good efficacy and acceptable risk";
+        } else if (efficacy > 0.65) {
+            return "Consider as alternative treatment option";
+        } else {
+            return "Consider only if other options are unsuccessful or contraindicated";
+        }
+    }
+
+    estimateTimeToImprovement(treatment, condition) {
+        const timeMap = {
+            'pain_management': '30-60 minutes for symptom relief',
+            'antibiotics': '24-48 hours for infection improvement',
+            'supportive_care': '3-7 days for symptomatic improvement',
+            'lithotripsy': '1-2 weeks for stone passage',
+            'surgical_removal': '2-4 weeks for full recovery',
+            'cystoscopy': '24-48 hours for procedure recovery'
+        };
+        
+        return timeMap[treatment.id] || 'Variable based on individual response and condition severity';
+    }
+
+    calculateQualityOfLifeImpact(statistics, condition) {
+        let qolScore = statistics.success.mean * 100;
+        
+        // Adjust for treatment burden
+        qolScore -= (statistics.costBreakdown.pain.mean * 8);
+        qolScore -= (statistics.costBreakdown.emotional.mean * 6);
+        qolScore -= (statistics.costBreakdown.social.mean * 4);
+        qolScore -= (statistics.costBreakdown.time.mean * 2);
+        
+        // Adjust for condition severity
+        if (condition.severity === 'severe') qolScore -= 10;
+        if (condition.chronicityRisk > 0.5) qolScore -= 15;
+        
+        if (qolScore > 85) return 'Significant improvement in quality of life expected';
+        if (qolScore > 70) return 'Good improvement in quality of life expected';
+        if (qolScore > 55) return 'Moderate improvement in quality of life expected';
+        if (qolScore > 40) return 'Some improvement in quality of life expected';
+        return 'Limited improvement in quality of life expected';
+    }
+
+    generateFollowUpRecommendations(treatment, condition) {
+        const recommendations = [];
+        
+        // Condition-specific recommendations
+        if (condition.id === 'kidney_stones') {
+            recommendations.push('Increase fluid intake to 2-3 liters daily');
+            recommendations.push('Follow up with urology in 2-4 weeks');
+            recommendations.push('Consider metabolic stone workup if recurrent');
+        } else if (condition.id === 'urinary_tract_infection') {
+            recommendations.push('Complete full antibiotic course even if symptoms improve');
+            recommendations.push('Follow up if symptoms persist after 48-72 hours of treatment');
+            recommendations.push('Consider prophylaxis if recurrent infections');
+        } else if (condition.id === 'migraine') {
+            recommendations.push('Keep headache diary to identify triggers');
+            recommendations.push('Follow up in 4-6 weeks to assess treatment response');
+            recommendations.push('Consider preventive therapy if frequent episodes');
+        }
+        
+        // Treatment-specific recommendations
+        if (treatment.sideEffects > 0.3) {
+            recommendations.push('Monitor for side effects and contact provider if concerning symptoms develop');
+        }
+        
+        if (treatment.contraindications && treatment.contraindications.length > 0) {
+            recommendations.push('Inform all healthcare providers of this treatment before procedures');
+        }
+        
+        // General recommendations
+        recommendations.push('Return for evaluation if symptoms worsen or do not improve as expected');
+        
+        return recommendations;
+    }
+
+    // Overall assessment methods
+    calculateOverallSeverity(symptoms) {
+        const severities = symptoms.map(s => s.severity);
+        const severeCounts = severities.filter(s => s === 'severe').length;
+        const moderateCounts = severities.filter(s => s === 'moderate').length;
+        
+        if (severeCounts > 0) return 'severe';
+        if (moderateCounts > severities.length / 2) return 'moderate';
+        return 'mild';
+    }
+
+    calculateChronicityRisk(symptoms, context) {
+        let risk = 0.3; // Base risk
+        
+        // Increase for chronic temporal patterns
+        if (symptoms.some(s => s.temporal === 'chronic')) risk += 0.3;
+        
+        // Increase for long duration
+        if (context.duration && /week|month|year/.test(context.duration)) risk += 0.2;
+        
+        // Increase for frequent symptoms
+        if (context.frequency === 'daily') risk += 0.2;
+        
+        return Math.min(risk, 1.0);
+    }
+
+    calculateOverallConfidence(symptoms, conditions) {
+        if (symptoms.length === 0) return 0;
+        
+        const avgSymptomConfidence = symptoms.reduce((sum, s) => sum + s.confidence, 0) / symptoms.length;
+        const conditionBonus = Math.min(conditions.length * 0.1, 0.3);
+        const evidenceBonus = conditions.length > 0 ? 
+            Math.min(conditions.reduce((sum, c) => sum + c.evidenceStrength, 0) / conditions.length * 0.2, 0.2) : 0;
+        
+        return Math.min(avgSymptomConfidence + conditionBonus + evidenceBonus, 1.0);
+    }
+
+    determineTemporalPattern(symptoms) {
+        const patterns = symptoms.map(s => s.temporal);
+        const chronics = patterns.filter(p => p === 'chronic').length;
+        const acutes = patterns.filter(p => p === 'acute').length;
+        
+        if (chronics > acutes) return 'chronic';
+        if (acutes > 0) return 'acute';
+        return 'subacute';
+    }
+
+    extractClinicalModifiers(context) {
+        const modifiers = [];
+        
+        if (context.timing) modifiers.push(`Timing: ${context.timing}`);
+        if (context.frequency) modifiers.push(`Frequency: ${context.frequency}`);
+        if (context.duration) modifiers.push(`Duration: ${context.duration}`);
+        if (context.systemicSigns) modifiers.push(`Systemic signs: ${context.systemicSigns.join(', ')}`);
+        
+        return modifiers;
+    }
+}
+
+// Statistics Calculator utility class
+class StatisticsCalculator {
+    calculateStatistics(values) {
+        if (!values || values.length === 0) {
+            return { mean: 0, se: 0, min: 0, max: 0, std: 0 };
+        }
+        
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
+        const std = Math.sqrt(variance);
+        const se = std / Math.sqrt(values.length);
+        
+        return {
+            mean,
+            se,
+            min: Math.min(...values),
+            max: Math.max(...values),
+            std
+        };
+    }
+}
+
+
+// Enhanced Clinical Intelligence Engine with Dynamic Components
+class EnhancedClinicalIntelligenceEngine {
+    constructor() {
+        this.isReady = false;
+        this.hpoData = null;
+        this.biomedicalKB = null;
+        this.symptomDetector = null;
+        this.conditionMapper = null;
+        this.narrativeBuilder = null;
+        this.initialize();
+    }
+
+    async initialize() {
+        try {
+            await this.loadKnowledgeBasesRobustly();
+            this.initializeProcessors();
+            this.isReady = true;
+            console.log('Enhanced Clinical Intelligence Engine ready');
+            console.log(`Symptoms indexed: ${this.symptomDetector?.symptomIndex?.size || 0}`);
+            console.log(`Conditions indexed: ${this.conditionMapper?.conditionIndex?.size || 0}`);
+        } catch (error) {
+            console.warn('Using fallback data due to:', error);
+            this.initializeFallbackProcessors();
+            this.isReady = true;
+        }
+    }
+
+    async loadKnowledgeBasesRobustly() {
+        // HPO Loading with multiple fallback strategies
+        try {
+            const hpoResponse = await fetch('assets/hp.json');
+            if (hpoResponse.ok) {
+                this.hpoData = await hpoResponse.json();
+                console.log('HPO data loaded successfully');
+            } else {
+                throw new Error('HPO not available');
+            }
+        } catch (error) {
+            console.log('HPO not available, using sample data');
+            this.hpoData = this.createSampleHPOData();
+        }
+
+        // Biomedical KB with multiple format support
+        try {
+            const kbJsonResponse = await fetch('assets/Biomedical_Knowledgebase.json');
+            if (kbJsonResponse.ok) {
+                this.biomedicalKB = await kbJsonResponse.json();
+                console.log('Biomedical KB loaded from JSON');
+            } else {
+                const txtResponse = await fetch('assets/Biomedical_Knowledgebase.txt');
+                if (txtResponse.ok) {
+                    const text = await txtResponse.text();
+                    this.biomedicalKB = await this.parseTextKB(text);
+                    console.log('Biomedical KB parsed from text');
+                } else {
+                    throw new Error('KB not available');
+                }
+            }
+        } catch (error) {
+            console.log('Biomedical KB not available, using fallback');
+            this.biomedicalKB = this.createFallbackKB();
+        }
+    }
+
+initializeProcessors() {
+    // Initialize with fully dynamic processors
+    this.symptomDetector = new DynamicSymptomDetector(this.hpoData, this.biomedicalKB);
+    this.conditionMapper = new FullyDynamicConditionMapper(this.biomedicalKB, this.hpoData);
+    this.narrativeBuilder = new ClinicalNarrativeBuilder();
+    
+    console.log('Fully dynamic processors initialized');
+}
+
+initializeFallbackProcessors() {
+    // Even fallback uses dynamic extraction
+    const fallbackHPO = this.createSampleHPOData();
+    const fallbackKB = this.createFallbackKB();
+    
+    this.symptomDetector = new DynamicSymptomDetector(fallbackHPO, fallbackKB);
+    this.conditionMapper = new FullyDynamicConditionMapper(fallbackKB, fallbackHPO);
+    this.narrativeBuilder = new ClinicalNarrativeBuilder();
+}
+
+generateTreatmentPaths(conditions) {
+    const paths = [];
+    
+    conditions.forEach(condition => {
+        if (condition.treatments && condition.treatments.length > 0) {
+            condition.treatments.forEach(treatment => {
+                // Ensure treatment has required properties
+                const enhancedTreatment = this.enhanceTreatment(treatment);
+                const statistics = this.narrativeBuilder.runEnhancedSimulations(enhancedTreatment, condition);
+                
+                paths.push({
+                    condition,
+                    treatment: enhancedTreatment,
+                    statistics,
+                    evidenceLevel: this.calculateEvidenceLevel(condition, enhancedTreatment),
+                    clinicalRecommendation: this.generateClinicalRecommendation(condition, enhancedTreatment)
+                });
+            });
+        } else {
+            // Generate default supportive care if no specific treatments found
+            const defaultTreatment = this.createDefaultTreatment(condition);
+            const statistics = this.narrativeBuilder.runEnhancedSimulations(defaultTreatment, condition);
+            
+            paths.push({
+                condition,
+                treatment: defaultTreatment,
+                statistics,
+                evidenceLevel: 'Low-Moderate',
+                clinicalRecommendation: 'Standard supportive care and monitoring recommended'
+            });
+        }
+    });
+    
+    return paths;
+}
+
+enhanceTreatment(treatment) {
+    return {
+        id: treatment.id || treatment.treatmentId,
+        name: treatment.name || 'Standard Treatment',
+        description: treatment.description || treatment.context || 'Standard medical management',
+        efficacy: treatment.efficacy || 0.7,
+        cost: treatment.cost || 1000,
+        sideEffects: treatment.sideEffects || 0.2,
+        contraindications: treatment.contraindications || [],
+        painLevel: this.estimatePainLevel(treatment),
+        emotionalStress: this.estimateEmotionalStress(treatment),
+        socialImpact: this.estimateSocialImpact(treatment),
+        timeCommitment: this.estimateTimeCommitment(treatment)
+    };
+}
+
+createDefaultTreatment(condition) {
+    return {
+        id: 'supportive_care',
+        name: 'Supportive Care',
+        description: `Standard supportive care for ${condition.name}`,
+        efficacy: 0.7,
+        cost: 500,
+        sideEffects: 0.05,
+        contraindications: [],
+        painLevel: 0,
+        emotionalStress: 1,
+        socialImpact: 0,
+        timeCommitment: 2
+    };
+}
+
+estimatePainLevel(treatment) {
+    const name = treatment.name.toLowerCase();
+    if (/surgery|operation|transplant/.test(name)) return 6;
+    if (/injection|procedure/.test(name)) return 3;
+    if (/medication|therapy/.test(name)) return 1;
+    return 0;
+}
+
+estimateEmotionalStress(treatment) {
+    const name = treatment.name.toLowerCase();
+    if (/surgery|transplant|cancer/.test(name)) return 7;
+    if (/procedure|therapy/.test(name)) return 3;
+    if (/medication/.test(name)) return 1;
+    return 2;
+}
+
+estimateSocialImpact(treatment) {
+    const name = treatment.name.toLowerCase();
+    if (/surgery|transplant/.test(name)) return 5;
+    if (/therapy|procedure/.test(name)) return 2;
+    return 0;
+}
+
+estimateTimeCommitment(treatment) {
+    const name = treatment.name.toLowerCase();
+    if (/surgery|transplant/.test(name)) return 12;
+    if (/therapy|procedure/.test(name)) return 4;
+    if (/medication/.test(name)) return 2;
+    return 1;
+}
+
+    // Main analysis method
+    async analyzeClinicalPresentation(text) {
+        if (!this.isReady) {
+            throw new Error('Clinical engine not ready');
+        }
+
+        console.log('=== Starting Enhanced Clinical Analysis ===');
+        console.log('Input text:', text);
+
+        // Step 1: Dynamic symptom detection
+        const detectedSymptoms = this.symptomDetector.detectSymptoms(text);
+        console.log('Detected symptoms:', detectedSymptoms);
+
+        // Step 2: Extract clinical context
+        const clinicalContext = this.extractClinicalContext(text);
+        console.log('Clinical context:', clinicalContext);
+
+        // Step 3: Map symptoms to conditions
+        const mappedConditions = this.conditionMapper.mapSymptomsToConditions(detectedSymptoms);
+        console.log('Mapped conditions:', mappedConditions);
+
+        // Step 4: Build comprehensive clinical workflow
+        const clinicalWorkflow = this.narrativeBuilder.buildComprehensiveClinicalWorkflow(
+            detectedSymptoms, 
+            mappedConditions, 
+            clinicalContext
+        );
+
+        const result = {
+            symptoms: detectedSymptoms,
+            clinicalContext,
+            conditions: mappedConditions,
+            workflow: clinicalWorkflow,
+            confidence: this.narrativeBuilder.calculateOverallConfidence(detectedSymptoms, mappedConditions)
+        };
+
+        console.log('=== Analysis Complete ===');
+        console.log('Final result:', result);
+
+        return result;
+    }
+
+    extractClinicalContext(text) {
+        const lowerText = text.toLowerCase();
+        const context = {};
+        
+        // Timing patterns
+        if (/\b(morning|wake|dawn|am)\b/.test(lowerText)) {
+            context.timing = 'morning';
+        } else if (/\b(evening|night|pm)\b/.test(lowerText)) {
+            context.timing = 'evening';
+        }
+        
+        // Frequency patterns
+        if (/\b(every day|daily)\b/.test(lowerText)) {
+            context.frequency = 'daily';
+        } else if (/\b(frequent|often)\b/.test(lowerText)) {
+            context.frequency = 'frequent';
+        }
+        
+        // Duration patterns
+        if (/\b(\d+)\s*(week|weeks)\b/.test(lowerText)) {
+            context.duration = 'weeks';
+        } else if (/\b(\d+)\s*(month|months)\b/.test(lowerText)) {
+            context.duration = 'months';
+        }
+        
+        // Systemic signs
+        if (/\b(fever|temperature)\b/.test(lowerText)) {
+            context.systemicSigns = context.systemicSigns || [];
+            context.systemicSigns.push('fever');
+        }
+        
+        // Patient presentation language
+        if (/\b(patient|presents|history)\b/.test(lowerText)) {
+            context.clinicalPresentation = true;
+        }
+        
+        return context;
+    }
+
+    // Fallback data creators
+    createSampleHPOData() {
+        return {
+            graphs: [{
+                nodes: [
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0000790",
+                        lbl: "Hematuria",
+                        meta: {
+                            definition: { val: "The presence of blood in the urine" },
+                            synonyms: [
+                                { val: "Blood in urine" },
+                                { val: "Bloody urine" }
+                            ]
+                        }
+                    },
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0012330",
+                        lbl: "Renal pain",
+                        meta: {
+                            definition: { val: "Pain originating from the kidney" },
+                            synonyms: [
+                                { val: "Kidney pain" },
+                                { val: "Flank pain" },
+                                { val: "Nephralgia" }
+                            ]
+                        }
+                    },
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0002315",
+                        lbl: "Headache",
+                        meta: {
+                            definition: { val: "Pain in the head or neck region" },
+                            synonyms: [
+                                { val: "Head pain" },
+                                { val: "Cephalgia" }
+                            ]
+                        }
+                    },
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0100749",
+                        lbl: "Chest pain",
+                        meta: {
+                            definition: { val: "Pain in the chest" },
+                            synonyms: [
+                                { val: "Thoracic pain" }
+                            ]
+                        }
+                    }
+                ]
+            }]
+        };
+    }
+
+    createFallbackKB() {
+        return {
+            symptoms: {
+                'hematuria': {
+                    name: 'Hematuria',
+                    properties: {
+                        description: 'Presence of blood in urine',
+                        associated_conditions: ['kidney_stones', 'urinary_tract_infection', 'bladder_cancer']
+                    }
+                },
+                'kidney_pain': {
+                    name: 'Kidney Pain',
+                    properties: {
+                        description: 'Pain in the kidney region',
+                        associated_conditions: ['kidney_stones', 'pyelonephritis']
+                    }
+                }
+            },
+            conditions: {
+                'kidney_stones': {
+                    name: 'Kidney Stones',
+                    properties: {
+                        description: 'Hard deposits in the kidney',
+                        severity: 'moderate to severe',
+                        prevalence: 0.1
+                    }
+                },
+                'urinary_tract_infection': {
+                    name: 'Urinary Tract Infection',
+                    properties: {
+                        description: 'Bacterial infection of the urinary system',
+                        severity: 'mild to moderate',
+                        prevalence: 0.15
+                    }
+                }
+            },
+            treatments: {
+                'pain_management': {
+                    name: 'Pain Management',
+                    properties: {
+                        description: 'Comprehensive pain relief therapy',
+                        efficacy: 0.85,
+                        cost: 300,
+                        side_effects: 0.15
+                    }
+                },
+                'antibiotics': {
+                    name: 'Antibiotic Therapy',
+                    properties: {
+                        description: 'Targeted antimicrobial treatment',
+                        efficacy: 0.90,
+                        cost: 150,
+                        side_effects: 0.20
+                    }
+                }
+            },
+            relationships: {
+                'kidney_stones': {
+                    symptoms: ['hematuria', 'kidney_pain'],
+                    treatments: ['pain_management', 'lithotripsy']
+                },
+                'urinary_tract_infection': {
+                    symptoms: ['hematuria'],
+                    treatments: ['antibiotics']
+                }
+            }
+        };
+    }
+
+    async parseTextKB(text) {
+        // Enhanced text parsing for biomedical knowledge
+        const kb = {
+            symptoms: {},
+            conditions: {},
+            treatments: {},
+            relationships: {}
+        };
+
+        // Extract medical terms using regex patterns
+        const medicalTerms = this.extractMedicalTermsFromText(text);
+        
+        // Process conditions
+        medicalTerms.conditions.forEach(condition => {
+            kb.conditions[condition.id] = {
+                name: condition.name,
+                properties: {
+                    description: condition.context,
+                    confidence: condition.confidence
+                }
+            };
+        });
+
+        // Process symptoms  
+        medicalTerms.symptoms.forEach(symptom => {
+            kb.symptoms[symptom.id] = {
+                name: symptom.name,
+                properties: {
+                    description: symptom.context,
+                    confidence: symptom.confidence
+                }
+            };
+        });
+
+        // Process treatments
+        medicalTerms.treatments.forEach(treatment => {
+            kb.treatments[treatment.id] = {
+                name: treatment.name,
+                properties: {
+                    description: treatment.context,
+                    confidence: treatment.confidence
+                }
+            };
+        });
+
+        // Merge with fallback to ensure minimum viable data
+        const fallback = this.createFallbackKB();
+        Object.assign(kb.conditions, fallback.conditions);
+        Object.assign(kb.symptoms, fallback.symptoms);
+        Object.assign(kb.treatments, fallback.treatments);
+        Object.assign(kb.relationships, fallback.relationships);
+
+        return kb;
+    }
+
+    extractMedicalTermsFromText(text) {
+        const terms = {
+            conditions: [],
+            symptoms: [],
+            treatments: []
+        };
+
+        // Medical condition patterns
+        const conditionPatterns = [
+            /\b(\w+)\s+(syndrome|disease|disorder|condition|cancer|tumor|infection|itis|osis)\b/gi,
+            /\b(diabetes|hypertension|asthma|pneumonia|migraine|epilepsy)\b/gi
+        ];
+
+        // Symptom patterns
+        const symptomPatterns = [
+            /\b(pain|ache|headache|fever|nausea|fatigue|hematuria|dyspnea)\b/gi,
+            /\b(\w+)\s+(pain|ache|bleeding)\b/gi
+        ];
+
+        // Treatment patterns
+        const treatmentPatterns = [
+            /\b(\w+)\s+(therapy|treatment|medication|surgery)\b/gi,
+            /\b(antibiotics|analgesics|surgery|chemotherapy)\b/gi
+        ];
+
+        // Extract each type
+        this.extractTermsByPatterns(text, conditionPatterns, terms.conditions, 'condition');
+        this.extractTermsByPatterns(text, symptomPatterns, terms.symptoms, 'symptom');
+        this.extractTermsByPatterns(text, treatmentPatterns, terms.treatments, 'treatment');
+
+        return terms;
+    }
+
+    extractTermsByPatterns(text, patterns, termArray, type) {
+        const found = new Set();
+        
+        patterns.forEach(pattern => {
+            let match;
+            pattern.lastIndex = 0;
+            while ((match = pattern.exec(text)) !== null) {
+                const term = match[0].toLowerCase().trim();
+                if (term.length > 3 && !found.has(term)) {
+                    found.add(term);
+                    
+                    const start = Math.max(0, match.index - 100);
+                    const end = Math.min(text.length, match.index + match[0].length + 100);
+                    const context = text.substring(start, end).trim();
+                    
+                    termArray.push({
+                        id: term.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+                        name: term,
+                        context: context,
+                        confidence: 0.7,
+                        type: type
+                    });
+                }
+            }
+        });
+    }
+}
+
+
+        // Enhanced Clinical Display Components
+        const ClinicalAnalysisResults = ({ analysis }) => {
+            const [expandedNodes, setExpandedNodes] = React.useState(new Set(['root']));
+            
+            const toggleNode = (nodeId) => {
+                const newExpanded = new Set(expandedNodes);
+                if (newExpanded.has(nodeId)) {
+                    newExpanded.delete(nodeId);
+                } else {
+                    newExpanded.add(nodeId);
+                }
+                setExpandedNodes(newExpanded);
+            };
+
+            const renderWorkflowNode = (node, level = 0) => {
+                const isExpanded = expandedNodes.has(node.id);
+                const nodeColors = {
+                    symptom: 'bg-blue-100 border-blue-300',
+                    diagnosis: 'bg-green-100 border-green-300',
+                    treatment: 'bg-purple-100 border-purple-300',
+                    outcome: 'bg-orange-100 border-orange-300'
+                };
+                
+                const nodeIcons = {
+                    symptom: <AlertCircle className="w-4 h-4" />,
+                    diagnosis: <Brain className="w-4 h-4" />,
+                    treatment: <Activity className="w-4 h-4" />,
+                    outcome: <TrendingUp className="w-4 h-4" />
+                };
+
+                return (
+                    <div key={node.id} style={{ marginLeft: `${level * 20}px` }}>
+                        <div className={`p-3 rounded-lg border-2 ${nodeColors[node.type]} mb-2 cursor-pointer transition-all hover:shadow-md`}
+                             onClick={() => toggleNode(node.id)}>
+                            <div className="flex items-center gap-2">
+                                {nodeIcons[node.type]}
+                                <span className="font-medium">{node.title}</span>
+                                {node.children && node.children.length > 0 && (
+                                    <span className="text-xs bg-white px-2 py-1 rounded-full">
+                                        {isExpanded ? '−' : '+'}
+                                    </span>
+                                )}
+                            </div>
+                            
+                            {node.description && (
+                                <p className="text-sm text-gray-600 mt-1">{node.description}</p>
+                            )}
+                            
+                            {node.enhancedStatistics && (
+                                <div className="mt-3 space-y-2">
+                                    <div className="bg-white p-2 rounded border">
+                                        <div className="flex items-center gap-1 text-sm font-medium text-green-600">
+                                            <TrendingUp className="w-3 h-3" />
+                                            Success: {(node.enhancedStatistics.success.mean * 100).toFixed(1)}% ± {(node.enhancedStatistics.success.se * 100).toFixed(1)}%
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-white p-2 rounded border">
+                                        <div className="text-xs font-medium text-gray-700 mb-1">Comprehensive Costs</div>
+                                        <div className="grid grid-cols-2 gap-1 text-xs">
+                                            {Object.entries(node.enhancedStatistics.costBreakdown).map(([type, stats]) => (
+                                                <div key={type} className="flex items-center gap-1">
+                                                    {type === 'monetary' && <DollarSign className="w-3 h-3" />}
+                                                    {type === 'pain' && <Thermometer className="w-3 h-3" />}
+                                                    {type === 'emotional' && <Heart className="w-3 h-3" />}
+                                                    {type === 'social' && <Users className="w-3 h-3" />}
+                                                    {type === 'time' && <Clock className="w-3 h-3" />}
+                                                    <span className="capitalize">{type}:</span>
+                                                    <span>{stats.mean.toFixed(1)} ± {stats.se.toFixed(1)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {node.metadata && (
+                                <div className="mt-2 text-xs text-gray-500">
+                                    {node.metadata.severity && <div>Severity: {node.metadata.severity}</div>}
+                                    {node.metadata.chronicityRisk && <div>Chronicity Risk: {(node.metadata.chronicityRisk * 100).toFixed(0)}%</div>}
+                                    {node.metadata.evidenceLevel && <div>Evidence Level: {node.metadata.evidenceLevel}</div>}
+                                </div>
+                            )}
+                        </div>
+                        
+                        {isExpanded && node.children && node.children.map(child => 
+                            renderWorkflowNode(child, level + 1)
+                        )}
+                    </div>
+                );
+            };
+
+            return (
+                <div className="space-y-6">
+                    {/* Clinical Summary */}
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <Brain className="w-5 h-5 text-blue-600" />
+                            Enhanced Clinical Analysis Summary
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                                <h3 className="font-medium text-blue-800 mb-2">Detected Symptoms</h3>
+                                <div className="space-y-2">
+                                    {analysis.symptoms.map((symptom, index) => (
+                                        <div key={index} className="bg-blue-100 p-3 rounded text-sm">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium capitalize">
+                                                    {symptom.severity !== 'moderate' && `${symptom.severity} `}
+                                                    {symptom.temporal !== 'acute' && `${symptom.temporal} `}
+                                                    {symptom.name}
+                                                </span>
+                                                <span className="text-xs bg-blue-200 px-2 py-1 rounded">
+                                                    {(symptom.confidence * 100).toFixed(0)}%
+                                                </span>
+                                            </div>
+{(symptom.hpoTerms || symptom.hpoId || symptom.synonyms) && (
+    <div className="mt-1 text-xs text-blue-600">
+        {symptom.hpoId && `HPO: ${symptom.hpoId}`}
+        {symptom.hpoTerms && symptom.hpoTerms.length > 0 && ` | Terms: ${symptom.hpoTerms.join(', ')}`}
+        {symptom.synonyms && symptom.synonyms.length > 0 && ` | Synonyms: ${symptom.synonyms.slice(0, 2).join(', ')}`}
+        {symptom.matchedTerm && ` | Matched: "${symptom.matchedTerm}"`}
+    </div>
+)}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <div className="bg-green-50 p-4 rounded-lg">
+                                <h3 className="font-medium text-green-800 mb-2">Clinical Conditions</h3>
+                                <div className="space-y-2">
+                                    {analysis.conditions.map((condition, index) => (
+                                        <div key={index} className="bg-green-100 p-3 rounded text-sm">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium">{condition.name}</span>
+                                                <span className="text-xs bg-green-200 px-2 py-1 rounded">
+                                                    {(condition.adjustedProbability * 100).toFixed(1)}%
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-green-600 mt-1">
+                                                {condition.prognosis}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="mt-4 bg-purple-50 p-4 rounded-lg">
+                            <h3 className="font-medium text-purple-800 mb-2">Analysis Quality</h3>
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-gray-200 rounded-full h-3">
+                                    <div 
+                                        className="bg-purple-500 h-3 rounded-full transition-all duration-300"
+                                        style={{ width: `${analysis.confidence * 100}%` }}
+                                    ></div>
+                                </div>
+                                <span className="text-sm font-medium">
+                                    {(analysis.confidence * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Clinical Workflow */}
+                    {analysis.workflow && (
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h2 className="text-xl font-semibold mb-4">Enhanced Clinical Decision Workflow</h2>
+                            
+                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6">
+                                <h3 className="font-semibold text-gray-800 mb-2">Comprehensive Cost Analysis</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                                    <div className="flex items-center gap-1">
+                                        <DollarSign className="w-3 h-3 text-green-600" />
+                                        <span><strong>Monetary:</strong> Direct costs</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Thermometer className="w-3 h-3 text-red-600" />
+                                        <span><strong>Pain:</strong> Physical discomfort</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Heart className="w-3 h-3 text-pink-600" />
+                                        <span><strong>Emotional:</strong> Psychological impact</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Users className="w-3 h-3 text-blue-600" />
+                                        <span><strong>Social:</strong> Relationship impact</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3 text-purple-600" />
+                                        <span><strong>Time:</strong> Treatment duration</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="max-h-96 overflow-y-auto">
+                                {renderWorkflowNode(analysis.workflow)}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Main Application Component
+        const ImprovedClinicalApp = () => {
+            
+// const [clinicalEngine] = React.useState(() => new ClinicalIntelligenceEngine());
+const [clinicalEngine] = React.useState(() => new EnhancedClinicalIntelligenceEngine());
+    
+
+            const [isReady, setIsReady] = React.useState(false);
+            const [userInput, setUserInput] = React.useState('');
+            const [analysis, setAnalysis] = React.useState(null);
+            const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+            const [analysisProgress, setAnalysisProgress] = React.useState(0);
+
+            React.useEffect(() => {
+                const checkReady = () => {
+                    if (clinicalEngine.isReady) {
+                        setIsReady(true);
+                    } else {
+                        setTimeout(checkReady, 100);
+                    }
+                };
+                checkReady();
+            }, [clinicalEngine]);
+
+            const handleAnalysis = async () => {
+                setIsAnalyzing(true);
+                setAnalysisProgress(0);
+                
+                try {
+                    const steps = [
+                        'Initializing clinical analysis...',
+                        'Detecting symptoms with HPO integration...',
+                        'Analyzing clinical conditions...',
+                        'Generating treatment pathways...',
+                        'Running statistical simulations...',
+                        'Synthesizing clinical workflow...'
+                    ];
+                    
+                    for (let i = 0; i < steps.length; i++) {
+                        setAnalysisProgress((i / steps.length) * 100);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    const result = await clinicalEngine.analyzeClinicalPresentation(userInput);
+                    setAnalysis(result);
+                    setAnalysisProgress(100);
+                    
+                } catch (error) {
+                    console.error('Analysis error:', error);
+                } finally {
+                    setIsAnalyzing(false);
+                }
+            };
+
+            const exportResults = () => {
+                if (!analysis) return;
+                
+                const results = {
+                    input: userInput,
+                    analysis: analysis,
+                    timestamp: new Date().toISOString(),
+                    version: '2.0-Enhanced'
+                };
+                
+                const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `enhanced-clinical-analysis-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            if (!isReady) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md mx-auto">
+                            <div className="text-center">
+                                <div className="loading-spinner mx-auto mb-4"></div>
+                                <h2 className="text-xl font-semibold mb-2">Initializing Clinical Engine</h2>
+                                <p className="text-gray-600">Loading enhanced knowledge bases...</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                    {/* Header */}
+                    <nav className="bg-white shadow-lg border-b-4 border-blue-600">
+                        <div className="max-w-7xl mx-auto px-6 py-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                    <div className="w-12 h-12 flex items-center justify-center">
+                                        <img src="SOCR_Logo.png" alt="SOCR Logo" className="w-12 h-12 object-contain" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-gray-800">CLNQ: AI Clinical Decision Support (Gen-2)</h1>
+                                        <p className="text-sm text-gray-600">SOCR AI Clinical Decision Support Platform (Enhanced Gen-1)</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-6">
+                                    <div className="flex items-center gap-2">
+                                        <Database className="w-4 h-4 text-green-500" />
+                                        <span className="text-sm text-green-600">Enhanced HPO & Biomedical Knowledgebase Engine</span>
+                                    </div>
+                                    <a href="https://www.socr.umich.edu/" target="_blank" rel="noopener noreferrer" 
+                                       className="text-blue-600 hover:text-blue-800 transition-colors">
+                                        Visit SOCR.umich.edu
+                                    </a>
+									<div className="text-blue-600 hover:text-blue-800 transition-colors">
+                       					<a href="https://www.socr.umich.edu/GAIM" target="_blank" rel="noopener noreferrer" 
+                        					className="text-blue-600 hover:text-blue-800 transition-colors">Other SOCR GAIM Platforms</a>
+                     				</div>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <div className="p-6">
+                        <div className="max-w-7xl mx-auto">
+                            {/* Introduction */}
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                                    Enhanced Clinical Decision Support System
+                                </h1>
+                                <p className="text-gray-600 mb-4">
+                                    Extending CLNQ Gen-1 with Gen-2 Knowledge Depth for Optimal Clinical Insights
+                                </p>
+                                <div className="flex gap-2 mb-4 text-sm">
+                                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">V.1 Clinical Coherence</span>
+                                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">HPO Integration</span>
+                                    <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">Enhanced Knowledge Base</span>
+                                    <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full">Statistical Modeling</span>
+                                </div>
+                            </div>
+
+                            {/* Input Section */}
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                                <h2 className="text-xl font-semibold mb-4">Clinical Presentation Analysis</h2>
+                                <textarea
+                                    value={userInput}
+                                    onChange={(e) => setUserInput(e.target.value)}
+                                    placeholder="Describe the clinical presentation. Example: 'Patient presents with severe, throbbing headaches occurring every morning for the past 2 weeks, accompanied by nausea and sensitivity to light. The headaches are interfering with daily activities.'"
+                                    className="w-full h-32 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <div className="flex gap-4 mt-4">
+                                    <button
+                                        onClick={handleAnalysis}
+                                        disabled={!userInput.trim() || isAnalyzing}
+                                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        {isAnalyzing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                        {isAnalyzing ? 'Analyzing...' : 'Enhanced Clinical Analysis'}
+                                    </button>
+                                    {analysis && (
+                                        <button
+                                            onClick={exportResults}
+                                            className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            Export Results
+                                        </button>
+                                    )}
+                                </div>
+                                
+                                {isAnalyzing && (
+                                    <div className="mt-4">
+                                        <div className="bg-gray-200 rounded-full h-3">
+                                            <div 
+                                                className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                                                style={{ width: `${analysisProgress}%` }}
+                                            ></div>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mt-2">
+                                            Running enhanced clinical analysis with HPO integration and statistical modeling...
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Results */}
+                            {analysis && (
+                                <ClinicalAnalysisResults analysis={analysis} />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <footer className="bg-gray-800 text-white mt-12">
+                        <div className="max-w-7xl mx-auto px-6 py-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div>
+                                    <div className="flex items-center space-x-3 mb-4">
+                                        <div className="w-12 h-12 flex items-center justify-center">
+                                            <img src="SOCR_Logo.png" alt="SOCR Logo" className="w-12 h-12 object-contain" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-semibold">SOCR Enhanced Clinical AI</h3>
+                                            <p className="text-sm text-gray-300">V.2 with Clinical Coherence</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-300 text-sm">
+                                        Extending CLNQ Gen-1 clinical clarity with Gen-2 knowledge depth.
+                                    </p>
+
+					<ul className="space-y-2 text-sm">
+                       <li>
+                         <a href="https://socr.umich.edu/GAIM/SOCR_CLNQ_0.html" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           CLNQ Gen-0</a>
+                       </li>
+                       <li>
+                         <a href="https://socr.umich.edu/GAIM/SOCR_CLNQ_1.html" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           CLNQ Gen-1</a>
+                       </li>
+                       <li>
+                         <a href="https://clinique.statisticalcomputing.org/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           CLNQ Gen-3</a>
+                       </li>
+                       <li>
+                         <a href="https://clnq.statisticalcomputing.org/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           CLNQ Gen-4</a>
+                       </li>
+                     </ul>
+                                </div>
+                                
+                                <div>
+                                    <h4 className="text-lg font-semibold mb-4">Enhanced Features</h4>
+                                    <ul className="space-y-2 text-sm text-gray-300">
+                                        <li>• Clinical Intelligence Engine</li>
+                                        <li>• HPO Ontology Integration</li>
+                                        <li>• Statistical Treatment Modeling</li>
+                                        <li>• Comprehensive Cost Analysis</li>
+                                        <li>• Evidence-Based Recommendations</li>
+                                    </ul>
+                                </div>
+                                
+                                <div>
+                                    <h4 className="text-lg font-semibold mb-4">Resources</h4>
+                                    <ul className="space-y-2 text-sm">
+                                        <li>
+                                            <a href="https://www.socr.umich.edu/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                                SOCR Main Site
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="https://hpo.jax.org/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                                HPO Ontology
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="https://github.com/SOCR" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                                GitHub Repository
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div className="border-t border-gray-700 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
+                                <div className="text-sm text-gray-400">
+                                    © 2025 SOCR - University of Michigan. Enhanced Clinical AI v2.0
+                                </div>
+                                <div className="text-sm text-gray-400 mt-2 md:mt-0">
+                                    <strong>Clinical Disclaimer:</strong> For educational and research purposes only. Always consult healthcare professionals.
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ImprovedClinicalApp />);
+    </script>
+
+    <!-- Start of StatCounter Code -->
+    <script type="text/javascript">
+        var sc_project = 5714596;
+        var sc_invisible = 1;
+        var sc_security = "038e9ac4";
+        var scJsHost = (("https:" == document.location.protocol) ? "https://secure."
+                : "https://www.");
+        document
+                .write("<sc"+"ript type='text/javascript' src='" +
+        scJsHost+
+        "statcounter.com/counter/counter.js'></"+"script>");
+    </script>
+    <noscript>
+        <div class="statcounter">
+            <a title="web analytics" href="https://statcounter.com/"
+                target="_blank"><img class="statcounter"
+                src="//c.statcounter.com/5714596/0/038e9ac4/1/"
+                alt="web analytics"></a>
+        </div>
+    </noscript>
+    <!-- End of StatCounter Code -->
+
+    <!-- GoogleAnalytics -->
+    <script src="https://www.google-analytics.com/urchin.js" type="text/javascript"> </script>
+    <script type="text/javascript"> _uacct = "UA-676559-1"; urchinTracker(); </script>
+    
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-69710121-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-69710121-1');
+    </script>
+    <!-- End of GoogleAnalytics Code -->
+
+</body>
+</html>
