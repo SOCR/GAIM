@@ -10,6 +10,7 @@ Table of contents
    * [Table of contents](#table-of-contents)
    * [Overview](#overview)
    * [Applications](#applications)
+   * [GAIM Systems](#gaim-systems)
    * [References](#references)
    * [Contact](#contact)
 <!--te-->
@@ -34,6 +35,16 @@ The [SOCR GAIM model](https://socr.umich.edu/GAIM/) is used to support the [SOCR
 * [GAIM Pressure Injury (14-min video)](https://drive.google.com/drive/folders/17OA0QqQhJ_sHNu1SPsY2Ofu4M2lQuzkR)
 * [GSlides SOCR AI Bot GAIM Applications](https://docs.google.com/presentation/d/1HCCWtRaqtPVMLAAcTiO6ankF6yLdLu0NUHxhpSfHIDg/edit?usp=sharing)
 
+GAIM Systems
+=============
+
+Here are examples of AI-driven CLinical Decision Support Systems.
+* [CLNQ Gen-0](https://socr.umich.edu/GAIM/SOCR_CLNQ_0.html)
+* [CLNQ Gen-1](https://socr.umich.edu/GAIM/SOCR_CLNQ_2.html)
+* [CLNQ Gen-2](https://clinique.statisticalcomputing.org/)
+* [CLNQ Gen-3](https://clnq.statisticalcomputing.org/)
+* [CLNQ Gen-4](https://clnq.statisticalcomputing.org/)
+* [Additional SOCR GAIM systems are available here](https://socr.umich.edu/GAIM/)
 
 References
 ==========
