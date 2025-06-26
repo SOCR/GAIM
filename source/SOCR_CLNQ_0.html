@@ -10,1106 +10,2130 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles for icons */
         .lucide { width: 1rem; height: 1rem; stroke: currentColor; stroke-width: 2; fill: none; }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
     
 <script type="text/babel">
-        // Lucide Icons (simplified versions) - ONLY THESE, NO IMPORTS
+        // Icons
         const AlertCircle = () => <svg className="lucide"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
         const Activity = () => <svg className="lucide"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>;
         const TrendingUp = () => <svg className="lucide"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/><polyline points="17,6 23,6 23,12"/></svg>;
         const DollarSign = () => <svg className="lucide"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
-        const Brain = () => <svg className="lucide"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>;
-        const Zap = () => <svg className="lucide"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>;
+        const Brain = () => <svg className="lucide"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/></svg>;
+        const Heart = () => <svg className="lucide"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+        const Users = () => <svg className="lucide"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>;
+        const Clock = () => <svg className="lucide"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>;
+        const Thermometer = () => <svg className="lucide"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>;
+        const Database = () => <svg className="lucide"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>;
         const Download = () => <svg className="lucide"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
         const Play = () => <svg className="lucide"><polygon points="5,3 19,12 5,21"/></svg>;
         const Pause = () => <svg className="lucide"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>;
-        const Eye = () => <svg className="lucide"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
-        const Heart = () => <svg className="lucide"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
-        const Users = () => <svg className="lucide"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
-        const Clock = () => <svg className="lucide"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>;
-        const Thermometer = () => <svg className="lucide"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>;
+        const ChevronDown = () => <svg className="lucide"><polyline points="6,9 12,15 18,9"/></svg>;
+        const ChevronRight = () => <svg className="lucide"><polyline points="9,18 15,12 9,6"/></svg>;
 
-        // Enhanced Biomedical Knowledge Base with comprehensive treatment pathways
-        const enhancedBiomedicalKnowledge = {
-          symptoms: {
-            'headache': {
-              conditions: ['migraine', 'tension_headache', 'cluster_headache', 'sinusitis', 'hypertension', 'sleep_apnea', 'medication_overuse_headache'],
-              severity: 0.7,
-              frequency: 0.8,
-              hpoTerms: ['HP:0002315']
-            },
-            'chills': {
-              conditions: ['viral_infection', 'bacterial_infection', 'hypothermia', 'hypoglycemia', 'anxiety', 'medication_withdrawal', 'sepsis'],
-              severity: 0.6,
-              frequency: 0.5,
-              hpoTerms: ['HP:0025143']
-            },
-            'morning_symptoms': {
-              conditions: ['sleep_apnea', 'hypoglycemia', 'dehydration', 'caffeine_withdrawal', 'depression', 'adrenal_insufficiency'],
-              severity: 0.5,
-              frequency: 0.4,
-              hpoTerms: ['HP:0030050']
-            },
-            'fatigue': {
-              conditions: ['anemia', 'thyroid_dysfunction', 'sleep_disorders', 'chronic_fatigue_syndrome', 'depression'],
-              severity: 0.6,
-              frequency: 0.7,
-              hpoTerms: ['HP:0012378']
-            },
-            'nausea': {
-              conditions: ['gastroenteritis', 'migraine', 'pregnancy', 'medication_side_effect', 'inner_ear_disorder'],
-              severity: 0.5,
-              frequency: 0.6,
-              hpoTerms: ['HP:0002018']
-            },
-            'fever': {
-              conditions: ['viral_infection', 'bacterial_infection', 'autoimmune_disease', 'malignancy'],
-              severity: 0.8,
-              frequency: 0.9,
-              hpoTerms: ['HP:0001945']
-            }
-          },
-          
-          conditions: {
-            'migraine': {
-              treatments: ['sumatriptan', 'preventive_medications', 'lifestyle_changes', 'botox_injections', 'cgrp_inhibitors'],
-              successRate: 0.75,
-              baseCost: 2500,
-              prognosis: 'Good with proper management and trigger avoidance',
-              severity: 'moderate_to_severe',
-              chronicityRisk: 0.3
-            },
-            'tension_headache': {
-              treatments: ['nsaids', 'stress_management', 'physical_therapy', 'relaxation_techniques', 'trigger_point_therapy'],
-              successRate: 0.85,
-              baseCost: 800,
-              prognosis: 'Excellent with lifestyle modifications and stress management',
-              severity: 'mild_to_moderate',
-              chronicityRisk: 0.15
-            },
-            'cluster_headache': {
-              treatments: ['oxygen_therapy', 'sumatriptan_injection', 'verapamil', 'steroid_bridge', 'deep_brain_stimulation'],
-              successRate: 0.70,
-              baseCost: 5000,
-              prognosis: 'Variable; often cyclical with remission periods',
-              severity: 'severe',
-              chronicityRisk: 0.4
-            },
-            'sleep_apnea': {
-              treatments: ['cpap_therapy', 'weight_loss', 'positional_therapy', 'oral_appliances', 'surgery'],
-              successRate: 0.80,
-              baseCost: 4000,
-              prognosis: 'Very good with CPAP compliance and lifestyle changes',
-              severity: 'moderate',
-              chronicityRisk: 0.2
-            },
-            'viral_infection': {
-              treatments: ['supportive_care', 'antivirals', 'symptom_management', 'rest_hydration', 'immune_support'],
-              successRate: 0.90,
-              baseCost: 300,
-              prognosis: 'Excellent; typically self-limiting within 7-14 days',
-              severity: 'mild_to_moderate',
-              chronicityRisk: 0.05
-            },
-            'bacterial_infection': {
-              treatments: ['antibiotics', 'supportive_care', 'hospitalization', 'iv_therapy', 'infection_control'],
-              successRate: 0.92,
-              baseCost: 1500,
-              prognosis: 'Excellent with appropriate antibiotic therapy',
-              severity: 'moderate_to_severe',
-              chronicityRisk: 0.1
-            },
-            'hypertension': {
-              treatments: ['ace_inhibitors', 'lifestyle_modifications', 'diuretics', 'calcium_channel_blockers', 'monitoring'],
-              successRate: 0.85,
-              baseCost: 2000,
-              prognosis: 'Good with medication compliance and lifestyle changes',
-              severity: 'moderate',
-              chronicityRisk: 0.8
-            }
-          },
-          
-          treatments: {
-            'sumatriptan': { 
-              efficacy: 0.75, 
-              monetaryCost: 150, 
-              painLevel: 2, 
-              emotionalStress: 1, 
-              socialImpact: 0, 
-              timeCommitment: 1,
-              sideEffects: 0.3,
-              contraindications: ['cardiovascular_disease', 'uncontrolled_hypertension']
-            },
-            'nsaids': { 
-              efficacy: 0.70, 
-              monetaryCost: 20, 
-              painLevel: 0, 
-              emotionalStress: 0, 
-              socialImpact: 0, 
-              timeCommitment: 0,
-              sideEffects: 0.2,
-              contraindications: ['peptic_ulcer', 'kidney_disease']
-            },
-            'cpap_therapy': { 
-              efficacy: 0.85, 
-              monetaryCost: 3000, 
-              painLevel: 1, 
-              emotionalStress: 3, 
-              socialImpact: 2, 
-              timeCommitment: 4,
-              sideEffects: 0.1,
-              contraindications: ['claustrophobia', 'severe_nasal_obstruction']
-            },
-            'oxygen_therapy': {
-              efficacy: 0.80,
-              monetaryCost: 500,
-              painLevel: 0,
-              emotionalStress: 2,
-              socialImpact: 1,
-              timeCommitment: 2,
-              sideEffects: 0.05,
-              contraindications: ['fire_hazard_environment']
-            },
-            'antibiotics': { 
-              efficacy: 0.90, 
-              monetaryCost: 50, 
-              painLevel: 0, 
-              emotionalStress: 1, 
-              socialImpact: 0, 
-              timeCommitment: 1,
-              sideEffects: 0.25,
-              contraindications: ['severe_allergies']
-            },
-            'lifestyle_changes': {
-              efficacy: 0.65,
-              monetaryCost: 200,
-              painLevel: 1,
-              emotionalStress: 2,
-              socialImpact: 1,
-              timeCommitment: 5,
-              sideEffects: 0.05,
-              contraindications: []
-            },
-            'botox_injections': {
-              efficacy: 0.60,
-              monetaryCost: 1200,
-              painLevel: 3,
-              emotionalStress: 2,
-              socialImpact: 1,
-              timeCommitment: 2,
-              sideEffects: 0.15,
-              contraindications: ['myasthenia_gravis', 'pregnancy']
-            },
-            'deep_brain_stimulation': {
-              efficacy: 0.75,
-              monetaryCost: 50000,
-              painLevel: 7,
-              emotionalStress: 8,
-              socialImpact: 4,
-              timeCommitment: 8,
-              sideEffects: 0.4,
-              contraindications: ['coagulopathy', 'active_infection']
-            }
-          }
-        };
+        // Enhanced Knowledge Service that prioritizes clinical coherence over data complexity
 
-        // Advanced NLP Processing
-        const advancedNLPProcessor = {
-          symptomPatterns: {
-            'headache': ['headache', 'head pain', 'cephalgia', 'migraine', 'head ache'],
-            'chills': ['chill', 'chills', 'shiver', 'shivering', 'cold', 'rigors'],
-            'fatigue': ['tired', 'fatigue', 'exhausted', 'weak', 'weakness', 'energy'],
-            'nausea': ['nausea', 'nauseous', 'sick', 'queasy', 'stomach'],
-            'fever': ['fever', 'hot', 'temperature', 'pyrexia', 'feverish'],
-            'morning_symptoms': ['morning', 'wake up', 'dawn', 'early', 'am']
-          },
-          
-          severityPatterns: {
-            'mild': ['mild', 'slight', 'minor', 'little', 'barely'],
-            'moderate': ['moderate', 'medium', 'average', 'noticeable'],
-            'severe': ['severe', 'intense', 'extreme', 'terrible', 'unbearable', 'excruciating']
-          },
-          
-          temporalPatterns: {
-            'acute': ['sudden', 'sudden onset', 'acute', 'immediately'],
-            'chronic': ['chronic', 'ongoing', 'persistent', 'constant', 'always'],
-            'intermittent': ['sometimes', 'occasionally', 'intermittent', 'comes and goes']
-          },
-          
-          frequencyPatterns: {
-            'rare': ['rarely', 'seldom', 'infrequent'],
-            'occasional': ['sometimes', 'occasionally', 'now and then'],
-            'frequent': ['often', 'frequently', 'regular', 'recurring'],
-            'constant': ['always', 'constant', 'continuous', 'all the time']
-          }
-        };
+// INSERT DYNAMIC SYMPTOM DETECTOR CLASS HERE
+// (Copy the entire DynamicSymptomDetector class from artifact 1)
+// Dynamic Symptom Detection using HPO metadata
+class DynamicSymptomDetector {
+    constructor(hpoData, biomedicalKB) {
+        this.hpoData = hpoData;
+        this.biomedicalKB = biomedicalKB;
+        this.symptomIndex = this.buildDynamicSymptomIndex();
+        this.synonymIndex = this.buildSynonymIndex();
+    }
 
-        // Enhanced symptom parsing with NLP
-        const parseSymptoms = (text) => {
-          const lowerText = text.toLowerCase();
-          const extractedSymptoms = [];
-          const severity = {};
-          const temporal = {};
-          const frequency = {};
-          
-          // Extract symptoms
-          Object.entries(advancedNLPProcessor.symptomPatterns).forEach(([symptom, patterns]) => {
-            if (patterns.some(pattern => lowerText.includes(pattern))) {
-              extractedSymptoms.push(symptom);
-              
-              // Extract severity
-              Object.entries(advancedNLPProcessor.severityPatterns).forEach(([level, severityPatterns]) => {
-                if (severityPatterns.some(pattern => lowerText.includes(pattern))) {
-                  severity[symptom] = level;
+    buildDynamicSymptomIndex() {
+        const index = new Map();
+        
+        // Extract from HPO data
+        if (this.hpoData?.graphs?.[0]?.nodes) {
+            this.hpoData.graphs[0].nodes.forEach(node => {
+                const hpoId = node.id.replace('http://purl.obolibrary.org/obo/', '');
+                const name = (node.lbl || node.label || '').toLowerCase();
+                const definition = node.meta?.definition?.val || '';
+                const synonyms = node.meta?.synonyms?.map(s => s.val.toLowerCase()) || [];
+                
+                if (name && this.isClinicalSymptom(name, definition)) {
+                    index.set(hpoId, {
+                        hpoId,
+                        name,
+                        definition,
+                        synonyms,
+                        searchTerms: this.generateSearchTerms(name, synonyms),
+                        clinicalRelevance: this.calculateClinicalRelevance(name, definition, synonyms)
+                    });
                 }
-              });
-              
-              // Extract temporal patterns
-              Object.entries(advancedNLPProcessor.temporalPatterns).forEach(([pattern, temporalPatterns]) => {
-                if (temporalPatterns.some(tp => lowerText.includes(tp))) {
-                  temporal[symptom] = pattern;
+            });
+        }
+        
+        // Extract from Biomedical KB symptoms
+        if (this.biomedicalKB?.symptoms) {
+            Object.entries(this.biomedicalKB.symptoms).forEach(([symptomId, symptomData]) => {
+                const name = (symptomData.name || symptomId).toLowerCase();
+                const description = symptomData.properties?.description || '';
+                
+                if (!this.findByName(index, name)) {
+                    index.set(symptomId, {
+                        symptomId,
+                        name,
+                        description,
+                        searchTerms: this.generateSearchTerms(name, []),
+                        clinicalRelevance: this.calculateClinicalRelevance(name, description, []),
+                        associatedConditions: symptomData.properties?.associated_conditions || []
+                    });
                 }
-              });
-              
-              // Extract frequency
-              Object.entries(advancedNLPProcessor.frequencyPatterns).forEach(([freq, freqPatterns]) => {
-                if (freqPatterns.some(fp => lowerText.includes(fp))) {
-                  frequency[symptom] = freq;
-                }
-              });
-            }
-          });
-          
-          return {
-            symptoms: extractedSymptoms,
-            severity,
-            temporal,
-            frequency
-          };
-        };
+            });
+        }
+        
+        console.log(`Built dynamic symptom index with ${index.size} symptoms`);
+        return index;
+    }
 
-        // Enhanced cost calculation including non-monetary factors
-        const calculateComprehensiveCost = (treatment) => {
-          const treatmentData = enhancedBiomedicalKnowledge.treatments[treatment];
-          if (!treatmentData) return { monetary: 1000, total: 1000 };
-          
-          // Weight factors for different cost components
-          const weights = {
-            monetary: 1.0,
-            pain: 200,        // $200 equivalent per pain unit
-            emotional: 150,   // $150 equivalent per emotional stress unit
-            social: 100,      // $100 equivalent per social impact unit
-            time: 50          // $50 equivalent per time commitment unit
-          };
-          
-          const totalCost = 
-            (treatmentData.monetaryCost * weights.monetary) +
-            (treatmentData.painLevel * weights.pain) +
-            (treatmentData.emotionalStress * weights.emotional) +
-            (treatmentData.socialImpact * weights.social) +
-            (treatmentData.timeCommitment * weights.time);
+    buildSynonymIndex() {
+        const synonymIndex = new Map();
+        
+        for (const [id, symptom] of this.symptomIndex) {
+            // Index main name
+            synonymIndex.set(symptom.name, id);
             
-          return {
-            monetary: treatmentData.monetaryCost,
-            pain: treatmentData.painLevel,
-            emotional: treatmentData.emotionalStress,
-            social: treatmentData.socialImpact,
-            time: treatmentData.timeCommitment,
-            total: totalCost
-          };
+            // Index synonyms
+            if (symptom.synonyms) {
+                symptom.synonyms.forEach(synonym => {
+                    synonymIndex.set(synonym.toLowerCase(), id);
+                });
+            }
+            
+            // Index search terms
+            if (symptom.searchTerms) {
+                symptom.searchTerms.forEach(term => {
+                    if (!synonymIndex.has(term)) {
+                        synonymIndex.set(term, id);
+                    }
+                });
+            }
+        }
+        
+        return synonymIndex;
+    }
+
+    isClinicalSymptom(name, definition) {
+        // Check if this HPO term represents a clinical symptom
+        const symptomKeywords = [
+            'pain', 'ache', 'headache', 'fever', 'nausea', 'fatigue', 'weakness',
+            'bleeding', 'blood', 'hematuria', 'dyspnea', 'cough', 'vomiting',
+            'diarrhea', 'constipation', 'swelling', 'edema', 'rash', 'itching',
+            'dizziness', 'vertigo', 'syncope', 'palpitations', 'tachycardia',
+            'bradycardia', 'hypertension', 'hypotension', 'chest pain', 'abdominal pain'
+        ];
+        
+        const excludeKeywords = [
+            'abnormality of', 'abnormal', 'increased', 'decreased', 'reduced',
+            'elevated', 'morphology', 'structure', 'development'
+        ];
+        
+        const nameOrDef = (name + ' ' + definition).toLowerCase();
+        
+        // Exclude structural/developmental terms
+        if (excludeKeywords.some(keyword => nameOrDef.includes(keyword))) {
+            return false;
+        }
+        
+        // Include symptom terms
+        return symptomKeywords.some(keyword => nameOrDef.includes(keyword)) ||
+               this.isSymptomByPattern(name);
+    }
+
+    isSymptomByPattern(name) {
+        // Pattern-based symptom detection
+        const symptomPatterns = [
+            /.*uria$/,          // hematuria, proteinuria, etc.
+            /.*algia$/,         // myalgia, arthralgia, etc.
+            /.*dynia$/,         // dysuria, etc.
+            /.*pnea$/,          // dyspnea, apnea, etc.
+            /.*itis$/,          // when referring to symptoms of inflammation
+            /pain$/,            // any type of pain
+            /ache$/,            // any type of ache
+        ];
+        
+        return symptomPatterns.some(pattern => pattern.test(name));
+    }
+
+    generateSearchTerms(name, synonyms) {
+        const terms = new Set([name]);
+        
+        // Add synonyms
+        synonyms.forEach(synonym => terms.add(synonym));
+        
+        // Add variations
+        const variations = this.generateVariations(name);
+        variations.forEach(variation => terms.add(variation));
+        
+        // Add word components for compound terms
+        const words = name.split(/[\s-_]+/);
+        if (words.length > 1) {
+            words.forEach(word => {
+                if (word.length > 3) terms.add(word);
+            });
+        }
+        
+        return Array.from(terms);
+    }
+
+    generateVariations(term) {
+        const variations = [];
+        
+        // Medical term variations
+        const medicalVariations = {
+            'hematuria': ['blood in urine', 'bloody urine', 'red urine'],
+            'dyspnea': ['shortness of breath', 'breathing difficulty', 'breathlessness'],
+            'cephalgia': ['headache', 'head pain'],
+            'myalgia': ['muscle pain', 'muscle ache'],
+            'arthralgia': ['joint pain'],
+            'nephralgia': ['kidney pain', 'renal pain'],
+            'thoracalgia': ['chest pain'],
+            'otalgia': ['ear pain'],
+            'gastralgia': ['stomach pain'],
+            'neuralgia': ['nerve pain']
+        };
+        
+        if (medicalVariations[term]) {
+            variations.push(...medicalVariations[term]);
+        }
+        
+        // Pattern-based variations
+        if (term.endsWith('algia')) {
+            const root = term.slice(0, -5);
+            variations.push(`${root} pain`, `${root} ache`);
+        }
+        
+        if (term.includes('pain')) {
+            variations.push(term.replace('pain', 'ache'));
+        }
+        
+        return variations;
+    }
+
+    calculateClinicalRelevance(name, definition, synonyms) {
+        let relevance = 0.5; // Base relevance
+        
+        // Increase for common clinical terms
+        const highRelevanceTerms = ['pain', 'blood', 'fever', 'nausea', 'fatigue', 'headache'];
+        if (highRelevanceTerms.some(term => name.includes(term))) {
+            relevance += 0.3;
+        }
+        
+        // Increase for specific medical terms
+        const specificTerms = ['hematuria', 'dyspnea', 'angina', 'syncope'];
+        if (specificTerms.some(term => name.includes(term))) {
+            relevance += 0.2;
+        }
+        
+        // Increase if has definition
+        if (definition && definition.length > 50) {
+            relevance += 0.1;
+        }
+        
+        // Increase if has synonyms
+        if (synonyms && synonyms.length > 0) {
+            relevance += 0.1;
+        }
+        
+        return Math.min(relevance, 1.0);
+    }
+
+    findByName(index, name) {
+        for (const [id, symptom] of index) {
+            if (symptom.name === name) return symptom;
+        }
+        return null;
+    }
+
+    detectSymptoms(text) {
+        const detectedSymptoms = [];
+        const lowerText = text.toLowerCase();
+        const processedTerms = new Set();
+        
+        // Search through synonym index for matches
+        for (const [term, symptomId] of this.synonymIndex) {
+            if (lowerText.includes(term) && !processedTerms.has(symptomId)) {
+                const symptom = this.symptomIndex.get(symptomId);
+                if (symptom) {
+                    const confidence = this.calculateMatchConfidence(term, lowerText, symptom);
+                    const severity = this.extractSeverity(lowerText, term);
+                    const temporal = this.extractTemporal(lowerText, term);
+                    
+                    detectedSymptoms.push({
+                        id: symptomId,
+                        name: symptom.name,
+                        hpoId: symptom.hpoId,
+                        matchedTerm: term,
+                        confidence,
+                        severity,
+                        temporal,
+                        definition: symptom.definition || symptom.description,
+                        synonyms: symptom.synonyms || [],
+                        clinicalRelevance: symptom.clinicalRelevance
+                    });
+                    
+                    processedTerms.add(symptomId);
+                }
+            }
+        }
+        
+        // Sort by relevance and confidence
+        return detectedSymptoms
+                .sort((a, b) => (b.clinicalRelevance * b.confidence) - (a.clinicalRelevance * a.confidence))
+                .slice(0, 10)
+                .map(symptom => this.normalizeSymptomForDisplay(symptom));
+
+    }
+
+    calculateMatchConfidence(term, text, symptom) {
+        let confidence = 0.7; // Base confidence
+        
+        // Exact match bonus
+        if (symptom.name === term) confidence += 0.2;
+        
+        // Context relevance
+        if (this.hasRelevantContext(text, term)) confidence += 0.1;
+        
+        // Term specificity bonus
+        if (term.length > 8) confidence += 0.1;
+        
+        // High relevance symptom bonus
+        if (symptom.clinicalRelevance > 0.8) confidence += 0.1;
+        
+        return Math.min(confidence, 1.0);
+    }
+
+    hasRelevantContext(text, term) {
+        const contextWords = ['patient', 'presents', 'complains', 'reports', 'experiencing', 'suffering', 'has', 'with'];
+        const termIndex = text.indexOf(term);
+        
+        if (termIndex === -1) return false;
+        
+        // Check for context words within 20 characters before the term
+        const contextStart = Math.max(0, termIndex - 20);
+        const context = text.slice(contextStart, termIndex);
+        
+        return contextWords.some(word => context.includes(word));
+    }
+
+    extractSeverity(text, term) {
+        const termIndex = text.indexOf(term);
+        const contextStart = Math.max(0, termIndex - 30);
+        const contextEnd = Math.min(text.length, termIndex + term.length + 30);
+        const context = text.slice(contextStart, contextEnd);
+        
+        if (/\b(severe|intense|excruciating|unbearable|debilitating)\b/.test(context)) {
+            return 'severe';
+        } else if (/\b(moderate|noticeable|bothersome|significant)\b/.test(context)) {
+            return 'moderate';
+        } else if (/\b(mild|slight|minor|dull)\b/.test(context)) {
+            return 'mild';
+        }
+        return 'moderate';
+    }
+
+    extractTemporal(text, term) {
+        const termIndex = text.indexOf(term);
+        const contextStart = Math.max(0, termIndex - 30);
+        const contextEnd = Math.min(text.length, termIndex + term.length + 30);
+        const context = text.slice(contextStart, contextEnd);
+        
+        if (/\b(chronic|ongoing|persistent|constant|history|long.?term)\b/.test(context)) {
+            return 'chronic';
+        } else if (/\b(sudden|acute|immediate|rapid|sharp)\b/.test(context)) {
+            return 'acute';
+        } else if (/\b(intermittent|occasional|episodes|comes.and.goes)\b/.test(context)) {
+            return 'episodic';
+        }
+        return 'acute';
+    }
+
+    normalizeSymptomForDisplay(symptom) {
+      return {
+        ...symptom,
+        // Ensure backward compatibility with existing display component
+        hpoTerms: symptom.hpoId ? [symptom.hpoId] : [],
+        // Add additional display-friendly fields
+        displayName: symptom.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        confidencePercent: Math.round(symptom.confidence * 100),
+        relevancePercent: Math.round((symptom.clinicalRelevance || 0.5) * 100)
+      };
+    }
+}
+
+
+// INSERT DYNAMIC CONDITION MAPPER CLASS HERE  
+// (Copy the entire DynamicConditionMapper class from artifact 2)
+// Dynamic Condition Mapping using Biomedical Knowledge Base
+class DynamicConditionMapper {
+    constructor(biomedicalKB, hpoData) {
+        this.biomedicalKB = biomedicalKB;
+        this.hpoData = hpoData;
+        this.conditionIndex = this.buildConditionIndex();
+        this.symptomToConditionMap = this.buildSymptomToConditionMap();
+        this.treatmentIndex = this.buildTreatmentIndex();
+    }
+
+    buildConditionIndex() {
+        const index = new Map();
+        
+        // Extract from biomedical KB conditions
+        if (this.biomedicalKB?.conditions) {
+            Object.entries(this.biomedicalKB.conditions).forEach(([conditionId, conditionData]) => {
+                const name = conditionData.name || conditionId;
+                const properties = conditionData.properties || {};
+                
+                index.set(conditionId, {
+                    id: conditionId,
+                    name: this.cleanConditionName(name),
+                    description: properties.description || '',
+                    severity: this.inferSeverity(properties),
+                    prevalence: this.inferPrevalence(properties),
+                    prognosis: this.inferPrognosis(properties),
+                    chronicityRisk: this.inferChronicityRisk(properties),
+                    searchTerms: this.generateConditionSearchTerms(name),
+                    properties
+                });
+            });
+        }
+        
+        // Extract additional conditions from text processing if available
+        if (this.biomedicalKB?.extractedConditions) {
+            Object.entries(this.biomedicalKB.extractedConditions).forEach(([conditionId, conditionData]) => {
+                if (!index.has(conditionId)) {
+                    index.set(conditionId, {
+                        id: conditionId,
+                        name: this.cleanConditionName(conditionData.name || conditionId),
+                        description: conditionData.context || conditionData.description || '',
+                        confidence: conditionData.confidence || 0.5,
+                        searchTerms: this.generateConditionSearchTerms(conditionData.name || conditionId),
+                        severity: this.inferSeverityFromText(conditionData.context || ''),
+                        prognosis: this.inferPrognosisFromText(conditionData.context || ''),
+                        chronicityRisk: this.inferChronicityFromText(conditionData.context || '')
+                    });
+                }
+            });
+        }
+        
+        console.log(`Built condition index with ${index.size} conditions`);
+        return index;
+    }
+
+    buildSymptomToConditionMap() {
+        const map = new Map();
+        
+        // From biomedical KB relationships
+        if (this.biomedicalKB?.relationships) {
+            Object.entries(this.biomedicalKB.relationships).forEach(([conditionId, relationships]) => {
+                if (relationships.symptoms) {
+                    relationships.symptoms.forEach(symptomId => {
+                        if (!map.has(symptomId)) {
+                            map.set(symptomId, []);
+                        }
+                        map.get(symptomId).push({
+                            conditionId,
+                            relationship: 'has_symptom',
+                            strength: 0.8
+                        });
+                    });
+                }
+            });
+        }
+        
+        // From symptom properties
+        if (this.biomedicalKB?.symptoms) {
+            Object.entries(this.biomedicalKB.symptoms).forEach(([symptomId, symptomData]) => {
+                if (symptomData.properties?.associated_conditions) {
+                    if (!map.has(symptomId)) {
+                        map.set(symptomId, []);
+                    }
+                    
+                    symptomData.properties.associated_conditions.forEach(conditionId => {
+                        const existing = map.get(symptomId).find(item => item.conditionId === conditionId);
+                        if (!existing) {
+                            map.get(symptomId).push({
+                                conditionId,
+                                relationship: 'associated_with',
+                                strength: 0.7
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Build associations from medical knowledge patterns
+        this.buildMedicalKnowledgeAssociations(map);
+        
+        return map;
+    }
+
+    buildMedicalKnowledgeAssociations(map) {
+        // Common medical associations based on clinical knowledge
+        const medicalAssociations = [
+            // Genitourinary
+            {
+                symptoms: ['hematuria', 'blood_in_urine'],
+                conditions: ['kidney_stones', 'urinary_tract_infection', 'bladder_cancer', 'glomerulonephritis'],
+                strength: 0.8
+            },
+            {
+                symptoms: ['kidney_pain', 'flank_pain', 'renal_pain'],
+                conditions: ['kidney_stones', 'pyelonephritis', 'renal_colic'],
+                strength: 0.9
+            },
+            // Neurological
+            {
+                symptoms: ['headache', 'cephalgia'],
+                conditions: ['migraine', 'tension_headache', 'cluster_headache'],
+                strength: 0.8
+            },
+            // Cardiovascular
+            {
+                symptoms: ['chest_pain'],
+                conditions: ['angina', 'myocardial_infarction', 'costochondritis'],
+                strength: 0.7
+            },
+            // Respiratory
+            {
+                symptoms: ['dyspnea', 'shortness_of_breath'],
+                conditions: ['asthma', 'pneumonia', 'heart_failure'],
+                strength: 0.8
+            },
+            // Systemic
+            {
+                symptoms: ['fever', 'chills'],
+                conditions: ['viral_infection', 'bacterial_infection', 'sepsis'],
+                strength: 0.7
+            }
+        ];
+
+        medicalAssociations.forEach(association => {
+            association.symptoms.forEach(symptom => {
+                if (!map.has(symptom)) {
+                    map.set(symptom, []);
+                }
+                
+                association.conditions.forEach(condition => {
+                    const existing = map.get(symptom).find(item => item.conditionId === condition);
+                    if (!existing) {
+                        map.get(symptom).push({
+                            conditionId: condition,
+                            relationship: 'medical_knowledge',
+                            strength: association.strength
+                        });
+                    }
+                });
+            });
+        });
+    }
+
+    buildTreatmentIndex() {
+        const index = new Map();
+        
+        if (this.biomedicalKB?.treatments) {
+            Object.entries(this.biomedicalKB.treatments).forEach(([treatmentId, treatmentData]) => {
+                const name = treatmentData.name || treatmentId;
+                const properties = treatmentData.properties || {};
+                
+                index.set(treatmentId, {
+                    id: treatmentId,
+                    name: this.cleanTreatmentName(name),
+                    description: properties.description || '',
+                    efficacy: this.parseNumericValue(properties.efficacy, 0.7),
+                    cost: this.parseNumericValue(properties.cost, 1000),
+                    sideEffects: this.parseNumericValue(properties.side_effects, 0.2),
+                    contraindications: this.parseArray(properties.contraindications),
+                    properties
+                });
+            });
+        }
+        
+        return index;
+    }
+
+    mapSymptomsToConditions(detectedSymptoms) {
+        const conditionScores = new Map();
+        const evidenceTracker = new Map();
+        
+        detectedSymptoms.forEach(symptom => {
+            // Check direct symptom mappings
+            const mappings = this.symptomToConditionMap.get(symptom.id) || 
+                           this.symptomToConditionMap.get(symptom.name) ||
+                           this.findSymptomMappingsBySearch(symptom);
+            
+            if (mappings) {
+                mappings.forEach(mapping => {
+                    const conditionId = mapping.conditionId;
+                    const weight = mapping.strength * symptom.confidence * symptom.clinicalRelevance;
+                    
+                    if (!conditionScores.has(conditionId)) {
+                        conditionScores.set(conditionId, 0);
+                        evidenceTracker.set(conditionId, []);
+                    }
+                    
+                    conditionScores.set(conditionId, conditionScores.get(conditionId) + weight);
+                    evidenceTracker.get(conditionId).push({
+                        symptom: symptom.name,
+                        evidence: mapping.relationship,
+                        strength: weight
+                    });
+                });
+            }
+        });
+        
+        // Convert to condition objects
+        const conditions = [];
+        for (const [conditionId, score] of conditionScores) {
+            const conditionData = this.conditionIndex.get(conditionId);
+            if (conditionData) {
+                const evidence = evidenceTracker.get(conditionId);
+                const probability = Math.min(score, 1.0);
+                
+                conditions.push({
+                    ...conditionData,
+                    probability,
+                    adjustedProbability: probability,
+                    evidenceStrength: probability,
+                    supportingSymptoms: detectedSymptoms.filter(symptom => 
+                        evidence.some(e => e.symptom === symptom.name)
+                    ),
+                    evidence,
+                    treatments: this.getConditionTreatments(conditionId)
+                });
+            }
+        }
+        
+        return conditions
+            .sort((a, b) => b.probability - a.probability)
+            .slice(0, 5); // Top 5 conditions
+    }
+
+    findSymptomMappingsBySearch(symptom) {
+        const mappings = [];
+        
+        // Search through all symptoms in the map using search terms
+        for (const [mapSymptomId, conditionMappings] of this.symptomToConditionMap) {
+            if (this.symptomsMatch(symptom, mapSymptomId)) {
+                mappings.push(...conditionMappings);
+            }
+        }
+        
+        return mappings.length > 0 ? mappings : null;
+    }
+
+    symptomsMatch(symptom, mapSymptomId) {
+        // Check if symptom matches map symptom ID through various means
+        const symptomTerms = [
+            symptom.id,
+            symptom.name,
+            ...(symptom.synonyms || []),
+            symptom.matchedTerm
+        ].filter(Boolean).map(term => term.toLowerCase());
+        
+        const mapSymptomLower = mapSymptomId.toLowerCase();
+        
+        return symptomTerms.some(term => 
+            term === mapSymptomLower || 
+            term.includes(mapSymptomLower) || 
+            mapSymptomLower.includes(term)
+        );
+    }
+
+    getConditionTreatments(conditionId) {
+        const treatments = [];
+        
+        // From biomedical KB relationships
+        if (this.biomedicalKB?.relationships?.[conditionId]?.treatments) {
+            this.biomedicalKB.relationships[conditionId].treatments.forEach(treatmentId => {
+                const treatmentData = this.treatmentIndex.get(treatmentId);
+                if (treatmentData) {
+                    treatments.push(treatmentData);
+                }
+            });
+        }
+        
+        // Add standard treatments based on condition type
+        const standardTreatments = this.getStandardTreatments(conditionId);
+        standardTreatments.forEach(treatment => {
+            if (!treatments.find(t => t.id === treatment.id)) {
+                treatments.push(treatment);
+            }
+        });
+        
+        return treatments;
+    }
+
+    getStandardTreatments(conditionId) {
+        // Standard treatment protocols based on medical knowledge
+        const standardProtocols = {
+            'kidney_stones': ['pain_management', 'increased_fluids', 'lithotripsy'],
+            'urinary_tract_infection': ['antibiotics', 'increased_fluids'],
+            'migraine': ['sumatriptan', 'nsaids', 'preventive_medications'],
+            'tension_headache': ['nsaids', 'stress_management'],
+            'viral_infection': ['supportive_care', 'symptom_management'],
+            'bacterial_infection': ['antibiotics', 'supportive_care']
+        };
+        
+        const treatmentIds = standardProtocols[conditionId] || ['supportive_care'];
+        
+        return treatmentIds.map(id => ({
+            id,
+            name: this.cleanTreatmentName(id),
+            description: this.getStandardTreatmentDescription(id),
+            efficacy: this.getStandardEfficacy(id),
+            cost: this.getStandardCost(id),
+            sideEffects: this.getStandardSideEffects(id),
+            contraindications: this.getStandardContraindications(id)
+        }));
+    }
+
+    // Utility methods for data parsing and inference
+    cleanConditionName(name) {
+        return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    cleanTreatmentName(name) {
+        return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    generateConditionSearchTerms(name) {
+        const terms = [name.toLowerCase()];
+        terms.push(...name.toLowerCase().split(/[\s_-]+/));
+        return [...new Set(terms)];
+    }
+
+    inferSeverity(properties) {
+        const description = (properties.description || '').toLowerCase();
+        if (/severe|critical|life.?threatening/.test(description)) return 'severe';
+        if (/moderate|significant/.test(description)) return 'moderate';
+        if (/mild|minor/.test(description)) return 'mild';
+        return 'moderate';
+    }
+
+    inferPrevalence(properties) {
+        const description = (properties.description || '').toLowerCase();
+        if (/common|frequent/.test(description)) return 0.3;
+        if (/rare|uncommon/.test(description)) return 0.05;
+        return properties.prevalence || 0.15;
+    }
+
+    inferPrognosis(properties) {
+        const description = (properties.description || '').toLowerCase();
+        if (/excellent|good.*prognosis/.test(description)) {
+            return 'Excellent prognosis with appropriate treatment';
+        }
+        if (/poor.*prognosis/.test(description)) {
+            return 'Variable prognosis; depends on early intervention';
+        }
+        return properties.prognosis || 'Good with appropriate medical management';
+    }
+
+    inferChronicityRisk(properties) {
+        const description = (properties.description || '').toLowerCase();
+        if (/chronic|long.?term/.test(description)) return 0.7;
+        if (/acute|short.?term/.test(description)) return 0.1;
+        return 0.3;
+    }
+
+    parseNumericValue(value, defaultValue) {
+        if (typeof value === 'number') return value;
+        if (typeof value === 'string') {
+            const parsed = parseFloat(value);
+            return isNaN(parsed) ? defaultValue : parsed;
+        }
+        return defaultValue;
+    }
+
+    parseArray(value) {
+        if (Array.isArray(value)) return value;
+        if (typeof value === 'string') return value.split(',').map(s => s.trim());
+        return [];
+    }
+
+    // Standard treatment data (fallback when not in KB)
+    getStandardTreatmentDescription(id) {
+        const descriptions = {
+            'pain_management': 'Comprehensive pain management with appropriate analgesics',
+            'antibiotics': 'Targeted antibiotic therapy based on culture sensitivity',
+            'supportive_care': 'Symptomatic treatment with rest, hydration, and monitoring',
+            'nsaids': 'Non-steroidal anti-inflammatory drugs for pain and inflammation',
+            'increased_fluids': 'Increased fluid intake to promote stone passage and prevent dehydration'
+        };
+        return descriptions[id] || `${id.replace(/_/g, ' ')} therapy`;
+    }
+
+    getStandardEfficacy(id) {
+        const efficacies = {
+            'pain_management': 0.85,
+            'antibiotics': 0.90,
+            'supportive_care': 0.75,
+            'nsaids': 0.70,
+            'increased_fluids': 0.60
+        };
+        return efficacies[id] || 0.70;
+    }
+
+    getStandardCost(id) {
+        const costs = {
+            'pain_management': 300,
+            'antibiotics': 150,
+            'supportive_care': 200,
+            'nsaids': 50,
+            'increased_fluids': 25
+        };
+        return costs[id] || 500;
+    }
+
+    getStandardSideEffects(id) {
+        const sideEffects = {
+            'pain_management': 0.20,
+            'antibiotics': 0.25,
+            'supportive_care': 0.05,
+            'nsaids': 0.15,
+            'increased_fluids': 0.02
+        };
+        return sideEffects[id] || 0.15;
+    }
+
+    getStandardContraindications(id) {
+        const contraindications = {
+            'pain_management': ['drug_allergies'],
+            'antibiotics': ['severe_allergies'],
+            'supportive_care': [],
+            'nsaids': ['peptic_ulcer', 'kidney_disease'],
+            'increased_fluids': ['heart_failure']
+        };
+        return contraindications[id] || [];
+    }
+}
+
+// INSERT CLINICAL NARRATIVE BUILDER CLASS HERE
+// (Copy the entire ClinicalNarrativeBuilder class from artifact 3)
+// Clinical Narrative Builder - Creates V.1 style comprehensive clinical narratives
+class ClinicalNarrativeBuilder {
+    constructor() {
+        this.statisticsCalculator = new StatisticsCalculator();
+    }
+
+    buildComprehensiveClinicalWorkflow(detectedSymptoms, mappedConditions, clinicalContext) {
+        let nodeId = 0;
+        
+        // Build symptom complex summary
+        const symptomComplex = this.buildSymptomComplex(detectedSymptoms, clinicalContext);
+        
+        // Root node - Symptom Complex
+        const rootNode = {
+            id: nodeId++,
+            type: 'symptom',
+            title: 'Symptom Complex',
+            description: this.generateSymptomComplexDescription(detectedSymptoms, clinicalContext),
+            children: [],
+            metadata: {
+                symptoms: detectedSymptoms,
+                clinicalContext,
+                severity: this.calculateOverallSeverity(detectedSymptoms),
+                chronicityRisk: this.calculateChronicityRisk(detectedSymptoms, clinicalContext),
+                confidence: this.calculateOverallConfidence(detectedSymptoms, mappedConditions)
+            }
         };
 
-        // Statistics calculation helper
-        const calculateStatistics = (values) => {
-          if (values.length === 0) return { mean: 0, se: 0 };
-          const mean = values.reduce((a, b) => a + b, 0) / values.length;
-          const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
-          const standardError = Math.sqrt(variance / values.length);
-          return { mean, se: standardError };
-        };
+        // Build condition branches
+        mappedConditions.forEach(condition => {
+            const diagnosisNode = this.buildDiagnosisNode(condition, nodeId++);
+            
+            // Build treatment branches for this condition
+            if (condition.treatments && condition.treatments.length > 0) {
+                condition.treatments.forEach(treatment => {
+                    const treatmentNode = this.buildTreatmentNode(treatment, condition, nodeId++);
+                    const outcomeNode = this.buildOutcomeNode(treatment, condition, nodeId++);
+                    
+                    treatmentNode.children.push(outcomeNode);
+                    diagnosisNode.children.push(treatmentNode);
+                });
+            }
+            
+            rootNode.children.push(diagnosisNode);
+        });
 
-        // Enhanced simulation with comprehensive factors
-        const runEnhancedSimulations = (condition, treatment, numSimulations = 20) => {
-          const successValues = [];
-          const costValues = [];
-          const costBreakdown = {
+        return rootNode;
+    }
+
+    buildSymptomComplex(symptoms, context) {
+        const primary = symptoms.slice(0, 4); // Top 4 symptoms
+        const severities = {};
+        
+        primary.forEach(symptom => {
+            severities[symptom.name] = symptom.severity;
+        });
+
+        return {
+            primarySymptoms: primary.map(s => s.name),
+            severities,
+            temporalPattern: this.determineTemporalPattern(symptoms),
+            clinicalModifiers: this.extractClinicalModifiers(context)
+        };
+    }
+
+    generateSymptomComplexDescription(symptoms, context) {
+        const symptomNames = symptoms.map(s => s.name).join(', ');
+        const severityInfo = symptoms.map(s => `${s.name}: ${s.severity}`).join(', ');
+        
+        let description = `${symptomNames} with ${severityInfo}`;
+        
+        if (context.timing) {
+            description += `. Timing: ${context.timing}`;
+        }
+        if (context.duration) {
+            description += `. Duration: ${context.duration}`;
+        }
+        if (context.frequency) {
+            description += `. Frequency: ${context.frequency}`;
+        }
+
+        return description;
+    }
+
+    buildDiagnosisNode(condition, nodeId) {
+        return {
+            id: nodeId,
+            type: 'diagnosis',
+            title: condition.name.toUpperCase(),
+            description: this.generateDiagnosisDescription(condition),
+            children: [],
+            metadata: {
+                probability: condition.probability,
+                adjustedProbability: condition.adjustedProbability,
+                severity: condition.severity,
+                chronicityRisk: condition.chronicityRisk,
+                evidence: condition.evidence,
+                supportingSymptoms: condition.supportingSymptoms,
+                prognosis: condition.prognosis
+            }
+        };
+    }
+
+    generateDiagnosisDescription(condition) {
+        let description = condition.prognosis || 'Standard medical management recommended';
+        
+        if (condition.evidence && condition.evidence.length > 0) {
+            const evidenceStrength = (condition.evidenceStrength * 100).toFixed(1);
+            description += `. Evidence strength: ${evidenceStrength}%`;
+        }
+        
+        if (condition.supportingSymptoms && condition.supportingSymptoms.length > 0) {
+            const supportingNames = condition.supportingSymptoms.map(s => s.name).join(', ');
+            description += `. Supporting symptoms: ${supportingNames}`;
+        }
+
+        return description;
+    }
+
+    buildTreatmentNode(treatment, condition, nodeId) {
+        return {
+            id: nodeId,
+            type: 'treatment',
+            title: treatment.name.toUpperCase(),
+            description: this.generateTreatmentDescription(treatment, condition),
+            children: [],
+            metadata: {
+                efficacy: treatment.efficacy,
+                cost: treatment.cost,
+                sideEffects: treatment.sideEffects,
+                contraindications: treatment.contraindications,
+                evidenceLevel: this.calculateTreatmentEvidenceLevel(treatment, condition),
+                clinicalRecommendation: this.generateClinicalRecommendation(treatment, condition)
+            }
+        };
+    }
+
+    generateTreatmentDescription(treatment, condition) {
+        let description = treatment.description || `${treatment.name} therapy`;
+        
+        if (treatment.contraindications && treatment.contraindications.length > 0) {
+            description += `. Contraindications: ${treatment.contraindications.join(', ')}`;
+        }
+        
+        const recommendation = this.generateClinicalRecommendation(treatment, condition);
+        description += `. ${recommendation}`;
+
+        return description;
+    }
+
+    buildOutcomeNode(treatment, condition, nodeId) {
+        const statistics = this.runEnhancedSimulations(treatment, condition);
+        
+        return {
+            id: nodeId,
+            type: 'outcome',
+            title: 'Expected Outcome',
+            description: this.generateOutcomeDescription(treatment, condition, statistics),
+            enhancedStatistics: statistics,
+            metadata: {
+                prognosis: condition.prognosis,
+                severity: condition.severity,
+                chronicityRisk: condition.chronicityRisk,
+                timeToImprovement: this.estimateTimeToImprovement(treatment, condition),
+                qualityOfLifeImpact: this.calculateQualityOfLifeImpact(statistics, condition),
+                followUpRecommendations: this.generateFollowUpRecommendations(treatment, condition)
+            }
+        };
+    }
+
+    generateOutcomeDescription(treatment, condition, statistics) {
+        const successRate = (statistics.success.mean * 100).toFixed(1);
+        const costEstimate = Math.round(statistics.cost.mean);
+        const sideEffectRisk = (treatment.sideEffects * 100).toFixed(1);
+        
+        let description = `${condition.prognosis}. `;
+        description += `Expected success rate: ${successRate}%. `;
+        description += `Total cost estimate: $${costEstimate}. `;
+        description += `Side effect probability: ${sideEffectRisk}%`;
+
+        return description;
+    }
+
+    runEnhancedSimulations(treatment, condition, numSimulations = 20) {
+        const successValues = [];
+        const costValues = [];
+        const costBreakdown = {
             monetary: [],
             pain: [],
             emotional: [],
             social: [],
             time: []
-          };
-          
-          const baseData = enhancedBiomedicalKnowledge.conditions[condition];
-          const treatmentData = enhancedBiomedicalKnowledge.treatments[treatment];
-          
-          if (!baseData || !treatmentData) {
-            return {
-              success: { mean: 0.5, se: 0.1 },
-              cost: { mean: 1000, se: 200 },
-              costBreakdown: {}
-            };
-          }
-          
-          for (let i = 0; i < numSimulations; i++) {
-            // Environmental and patient-specific variation
-            const envFactor = 1 + (Math.random() - 0.5) * 0.3;
-            const patientFactor = 1 + (Math.random() - 0.5) * 0.25;
-            const quantumNoise = (Math.random() - 0.5) * 0.1;
-            
-            // Success calculation with multiple factors
-            const baseSuccess = treatmentData.efficacy * baseData.successRate;
-            const adjustedSuccess = Math.max(0, Math.min(1, 
-              baseSuccess * envFactor * patientFactor + quantumNoise
-            ));
-            successValues.push(adjustedSuccess);
-            
-            // Comprehensive cost calculation
-            const costData = calculateComprehensiveCost(treatment);
-            const totalCostVariation = costData.total * (1 + (Math.random() - 0.5) * 0.4);
-            costValues.push(Math.max(0, totalCostVariation));
-            
-            // Track cost components
-            costBreakdown.monetary.push(costData.monetary * (1 + (Math.random() - 0.5) * 0.2));
-            costBreakdown.pain.push(costData.pain * (1 + (Math.random() - 0.5) * 0.3));
-            costBreakdown.emotional.push(costData.emotional * (1 + (Math.random() - 0.5) * 0.35));
-            costBreakdown.social.push(costData.social * (1 + (Math.random() - 0.5) * 0.25));
-            costBreakdown.time.push(costData.time * (1 + (Math.random() - 0.5) * 0.2));
-          }
-          
-          return {
-            success: calculateStatistics(successValues),
-            cost: calculateStatistics(costValues),
-            costBreakdown: {
-              monetary: calculateStatistics(costBreakdown.monetary),
-              pain: calculateStatistics(costBreakdown.pain),
-              emotional: calculateStatistics(costBreakdown.emotional),
-              social: calculateStatistics(costBreakdown.social),
-              time: calculateStatistics(costBreakdown.time)
-            }
-          };
         };
 
-        // Enhanced Alluvial Flow Visualization Component with Quantitative Outcomes
-        const AlluvialFlow = ({ workflow, onNodeClick, selectedPath }) => {
-          const canvasRef = React.useRef(null);
-          const [hoveredNode, setHoveredNode] = React.useState(null);
-          const [nodePositions, setNodePositions] = React.useState(new Map());
-          
-          React.useEffect(() => {
-            if (!workflow || !canvasRef.current) return;
-            
-            const canvas = canvasRef.current;
-            const ctx = canvas.getContext('2d');
-            const rect = canvas.getBoundingClientRect();
-            
-            canvas.width = rect.width * 2;
-            canvas.height = rect.height * 2;
-            ctx.scale(2, 2);
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const positions = new Map();
-            
-            // Enhanced drawing function with statistics
-            const drawAlluvialFlow = (node, x, y, level) => {
-              const nodeWidth = 140;
-              const nodeHeight = node.type === 'outcome' && node.enhancedStatistics ? 80 : 50;
-              const levelSpacing = 220;
-              
-              // Store node position for click detection
-              positions.set(node.id, { x, y, width: nodeWidth, height: nodeHeight, node });
-              
-              // Node colors with enhanced outcome styling
-              const colors = {
-                symptom: '#3B82F6',
-                diagnosis: '#10B981',
-                treatment: '#8B5CF6',
-                outcome: '#F59E0B'
-              };
-              
-              // Draw node background
-              ctx.fillStyle = colors[node.type] || '#6B7280';
-              ctx.fillRect(x, y, nodeWidth, nodeHeight);
-              
-              // Add border for outcome nodes with statistics
-              if (node.type === 'outcome' && node.enhancedStatistics) {
-                ctx.strokeStyle = '#DC2626';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x, y, nodeWidth, nodeHeight);
-              }
-              
-              // Draw main title
-              ctx.fillStyle = 'white';
-              ctx.font = 'bold 11px Arial';
-              ctx.textAlign = 'center';
-              const title = node.title.substring(0, 12) + (node.title.length > 12 ? '...' : '');
-              ctx.fillText(title, x + nodeWidth / 2, y + 15);
-              
-              // Draw statistics for outcome nodes
-              if (node.type === 'outcome' && node.enhancedStatistics) {
-                ctx.font = '9px Arial';
-                
-                // Success rate
-                const successText = `Success: ${node.enhancedStatistics.success && typeof node.enhancedStatistics.success.mean === 'number' ? 
-                  node.enhancedStatistics.success.mean.toFixed(2) : '0.00'}`;
-                ctx.fillText(successText, x + nodeWidth / 2, y + 30);
-                
-                // Total cost
-                const costText = `Cost: $${node.enhancedStatistics.cost && typeof node.enhancedStatistics.cost.mean === 'number' ? 
-                  Math.round(node.enhancedStatistics.cost.mean) : '0'}`;
-                ctx.fillText(costText, x + nodeWidth / 2, y + 45);
-                
-                // Cost breakdown indicators
-                if (node.enhancedStatistics.costBreakdown) {
-                  ctx.font = '7px Arial';
-                  const indicators = [];
-                  if (node.enhancedStatistics.costBreakdown.pain?.mean > 0) indicators.push('Pain');
-                  if (node.enhancedStatistics.costBreakdown.emotional?.mean > 0) indicators.push('Emot');
-                  if (node.enhancedStatistics.costBreakdown.social?.mean > 0) indicators.push('Soc');
-                  if (node.enhancedStatistics.costBreakdown.time?.mean > 2) indicators.push('Time');
-                  
-                  ctx.fillText(indicators.join(' '), x + nodeWidth / 2, y + 60);
+        for (let i = 0; i < numSimulations; i++) {
+            // Environmental and patient variation factors
+            const envFactor = 1 + (Math.random() - 0.5) * 0.3;
+            const patientFactor = 1 + (Math.random() - 0.5) * 0.25;
+            const complexityFactor = this.getComplexityFactor(condition);
+
+            // Success calculation
+            const baseSuccess = treatment.efficacy * 0.85; // Assume 85% base condition success rate
+            const adjustedSuccess = Math.max(0, Math.min(1, 
+                baseSuccess * envFactor * patientFactor * complexityFactor
+            ));
+            successValues.push(adjustedSuccess);
+
+            // Cost calculations with realistic variation
+            const baseCost = treatment.cost || 500;
+            const monetaryVariation = baseCost * (1 + (Math.random() - 0.5) * 0.4);
+            costBreakdown.monetary.push(Math.max(0, monetaryVariation));
+
+            // Pain level (0-10 scale)
+            const painLevel = this.calculatePainLevel(treatment, condition);
+            const painVariation = painLevel * (1 + (Math.random() - 0.5) * 0.3);
+            costBreakdown.pain.push(Math.max(0, painVariation));
+
+            // Emotional stress (0-10 scale)
+            const emotionalStress = this.calculateEmotionalStress(treatment, condition);
+            const emotionalVariation = emotionalStress * (1 + (Math.random() - 0.5) * 0.35);
+            costBreakdown.emotional.push(Math.max(0, emotionalVariation));
+
+            // Social impact (0-10 scale)
+            const socialImpact = this.calculateSocialImpact(treatment, condition);
+            const socialVariation = socialImpact * (1 + (Math.random() - 0.5) * 0.25);
+            costBreakdown.social.push(Math.max(0, socialVariation));
+
+            // Time commitment (weeks)
+            const timeCommitment = this.calculateTimeCommitment(treatment, condition);
+            const timeVariation = timeCommitment * (1 + (Math.random() - 0.5) * 0.2);
+            costBreakdown.time.push(Math.max(0, timeVariation));
+
+            // Total weighted cost
+            const totalCost = monetaryVariation + 
+                            (painVariation * 200) + 
+                            (emotionalVariation * 150) + 
+                            (socialVariation * 100) + 
+                            (timeVariation * 50);
+            costValues.push(totalCost);
+        }
+
+        return {
+            success: this.statisticsCalculator.calculateStatistics(successValues),
+            cost: this.statisticsCalculator.calculateStatistics(costValues),
+            costBreakdown: {
+                monetary: this.statisticsCalculator.calculateStatistics(costBreakdown.monetary),
+                pain: this.statisticsCalculator.calculateStatistics(costBreakdown.pain),
+                emotional: this.statisticsCalculator.calculateStatistics(costBreakdown.emotional),
+                social: this.statisticsCalculator.calculateStatistics(costBreakdown.social),
+                time: this.statisticsCalculator.calculateStatistics(costBreakdown.time)
+            }
+        };
+    }
+
+    // Utility methods for clinical calculations
+    getComplexityFactor(condition) {
+        if (condition.severity === 'severe') return 0.8;
+        if (condition.severity === 'moderate') return 0.9;
+        return 1.0;
+    }
+
+    calculatePainLevel(treatment, condition) {
+        const treatmentPain = {
+            'surgical_removal': 7,
+            'lithotripsy': 4,
+            'cystoscopy': 3,
+            'antibiotics': 0,
+            'pain_management': 1,
+            'supportive_care': 0
+        };
+        return treatmentPain[treatment.id] || 2;
+    }
+
+    calculateEmotionalStress(treatment, condition) {
+        const baseStress = condition.severity === 'severe' ? 4 : 2;
+        const treatmentStress = {
+            'surgical_removal': 5,
+            'lithotripsy': 3,
+            'cystoscopy': 3,
+            'antibiotics': 1,
+            'pain_management': 1,
+            'supportive_care': 1
+        };
+        return baseStress + (treatmentStress[treatment.id] || 1);
+    }
+
+    calculateSocialImpact(treatment, condition) {
+        const treatmentImpact = {
+            'surgical_removal': 4,
+            'lithotripsy': 2,
+            'cystoscopy': 1,
+            'antibiotics': 0,
+            'pain_management': 1,
+            'supportive_care': 0
+        };
+        return treatmentImpact[treatment.id] || 1;
+    }
+
+    calculateTimeCommitment(treatment, condition) {
+        const treatmentTime = {
+            'surgical_removal': 8,
+            'lithotripsy': 4,
+            'cystoscopy': 2,
+            'antibiotics': 1,
+            'pain_management': 2,
+            'supportive_care': 2
+        };
+        return treatmentTime[treatment.id] || 2;
+    }
+
+    calculateTreatmentEvidenceLevel(treatment, condition) {
+        const efficacy = treatment.efficacy || 0.7;
+        const conditionMatch = condition.evidenceStrength || 0.7;
+        
+        const combined = efficacy * conditionMatch;
+        
+        if (combined > 0.8) return 'High';
+        if (combined > 0.6) return 'Moderate-High';
+        if (combined > 0.4) return 'Moderate';
+        return 'Low-Moderate';
+    }
+
+    generateClinicalRecommendation(treatment, condition) {
+        const efficacy = treatment.efficacy || 0.7;
+        const cost = treatment.cost || 500;
+        const sideEffects = treatment.sideEffects || 0.2;
+        
+        if (efficacy > 0.85 && cost < 1000 && sideEffects < 0.15) {
+            return "Highly recommended first-line treatment with excellent safety profile";
+        } else if (efficacy > 0.75 && cost < 3000 && sideEffects < 0.25) {
+            return "Recommended treatment option with good efficacy and acceptable risk";
+        } else if (efficacy > 0.65) {
+            return "Consider as alternative treatment option";
+        } else {
+            return "Consider only if other options are unsuccessful or contraindicated";
+        }
+    }
+
+    estimateTimeToImprovement(treatment, condition) {
+        const timeMap = {
+            'pain_management': '30-60 minutes for symptom relief',
+            'antibiotics': '24-48 hours for infection improvement',
+            'supportive_care': '3-7 days for symptomatic improvement',
+            'lithotripsy': '1-2 weeks for stone passage',
+            'surgical_removal': '2-4 weeks for full recovery',
+            'cystoscopy': '24-48 hours for procedure recovery'
+        };
+        
+        return timeMap[treatment.id] || 'Variable based on individual response and condition severity';
+    }
+
+    calculateQualityOfLifeImpact(statistics, condition) {
+        let qolScore = statistics.success.mean * 100;
+        
+        // Adjust for treatment burden
+        qolScore -= (statistics.costBreakdown.pain.mean * 8);
+        qolScore -= (statistics.costBreakdown.emotional.mean * 6);
+        qolScore -= (statistics.costBreakdown.social.mean * 4);
+        qolScore -= (statistics.costBreakdown.time.mean * 2);
+        
+        // Adjust for condition severity
+        if (condition.severity === 'severe') qolScore -= 10;
+        if (condition.chronicityRisk > 0.5) qolScore -= 15;
+        
+        if (qolScore > 85) return 'Significant improvement in quality of life expected';
+        if (qolScore > 70) return 'Good improvement in quality of life expected';
+        if (qolScore > 55) return 'Moderate improvement in quality of life expected';
+        if (qolScore > 40) return 'Some improvement in quality of life expected';
+        return 'Limited improvement in quality of life expected';
+    }
+
+    generateFollowUpRecommendations(treatment, condition) {
+        const recommendations = [];
+        
+        // Condition-specific recommendations
+        if (condition.id === 'kidney_stones') {
+            recommendations.push('Increase fluid intake to 2-3 liters daily');
+            recommendations.push('Follow up with urology in 2-4 weeks');
+            recommendations.push('Consider metabolic stone workup if recurrent');
+        } else if (condition.id === 'urinary_tract_infection') {
+            recommendations.push('Complete full antibiotic course even if symptoms improve');
+            recommendations.push('Follow up if symptoms persist after 48-72 hours of treatment');
+            recommendations.push('Consider prophylaxis if recurrent infections');
+        } else if (condition.id === 'migraine') {
+            recommendations.push('Keep headache diary to identify triggers');
+            recommendations.push('Follow up in 4-6 weeks to assess treatment response');
+            recommendations.push('Consider preventive therapy if frequent episodes');
+        }
+        
+        // Treatment-specific recommendations
+        if (treatment.sideEffects > 0.3) {
+            recommendations.push('Monitor for side effects and contact provider if concerning symptoms develop');
+        }
+        
+        if (treatment.contraindications && treatment.contraindications.length > 0) {
+            recommendations.push('Inform all healthcare providers of this treatment before procedures');
+        }
+        
+        // General recommendations
+        recommendations.push('Return for evaluation if symptoms worsen or do not improve as expected');
+        
+        return recommendations;
+    }
+
+    // Overall assessment methods
+    calculateOverallSeverity(symptoms) {
+        const severities = symptoms.map(s => s.severity);
+        const severeCounts = severities.filter(s => s === 'severe').length;
+        const moderateCounts = severities.filter(s => s === 'moderate').length;
+        
+        if (severeCounts > 0) return 'severe';
+        if (moderateCounts > severities.length / 2) return 'moderate';
+        return 'mild';
+    }
+
+    calculateChronicityRisk(symptoms, context) {
+        let risk = 0.3; // Base risk
+        
+        // Increase for chronic temporal patterns
+        if (symptoms.some(s => s.temporal === 'chronic')) risk += 0.3;
+        
+        // Increase for long duration
+        if (context.duration && /week|month|year/.test(context.duration)) risk += 0.2;
+        
+        // Increase for frequent symptoms
+        if (context.frequency === 'daily') risk += 0.2;
+        
+        return Math.min(risk, 1.0);
+    }
+
+    calculateOverallConfidence(symptoms, conditions) {
+        if (symptoms.length === 0) return 0;
+        
+        const avgSymptomConfidence = symptoms.reduce((sum, s) => sum + s.confidence, 0) / symptoms.length;
+        const conditionBonus = Math.min(conditions.length * 0.1, 0.3);
+        const evidenceBonus = conditions.length > 0 ? 
+            Math.min(conditions.reduce((sum, c) => sum + c.evidenceStrength, 0) / conditions.length * 0.2, 0.2) : 0;
+        
+        return Math.min(avgSymptomConfidence + conditionBonus + evidenceBonus, 1.0);
+    }
+
+    determineTemporalPattern(symptoms) {
+        const patterns = symptoms.map(s => s.temporal);
+        const chronics = patterns.filter(p => p === 'chronic').length;
+        const acutes = patterns.filter(p => p === 'acute').length;
+        
+        if (chronics > acutes) return 'chronic';
+        if (acutes > 0) return 'acute';
+        return 'subacute';
+    }
+
+    extractClinicalModifiers(context) {
+        const modifiers = [];
+        
+        if (context.timing) modifiers.push(`Timing: ${context.timing}`);
+        if (context.frequency) modifiers.push(`Frequency: ${context.frequency}`);
+        if (context.duration) modifiers.push(`Duration: ${context.duration}`);
+        if (context.systemicSigns) modifiers.push(`Systemic signs: ${context.systemicSigns.join(', ')}`);
+        
+        return modifiers;
+    }
+}
+
+// Statistics Calculator utility class
+class StatisticsCalculator {
+    calculateStatistics(values) {
+        if (!values || values.length === 0) {
+            return { mean: 0, se: 0, min: 0, max: 0, std: 0 };
+        }
+        
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+        const variance = values.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / values.length;
+        const std = Math.sqrt(variance);
+        const se = std / Math.sqrt(values.length);
+        
+        return {
+            mean,
+            se,
+            min: Math.min(...values),
+            max: Math.max(...values),
+            std
+        };
+    }
+}
+
+
+// Enhanced Clinical Intelligence Engine with Dynamic Components
+class EnhancedClinicalIntelligenceEngine {
+    constructor() {
+        this.isReady = false;
+        this.hpoData = null;
+        this.biomedicalKB = null;
+        this.symptomDetector = null;
+        this.conditionMapper = null;
+        this.narrativeBuilder = null;
+        this.initialize();
+    }
+
+    async initialize() {
+        try {
+            await this.loadKnowledgeBasesRobustly();
+            this.initializeProcessors();
+            this.isReady = true;
+            console.log('Enhanced Clinical Intelligence Engine ready');
+            console.log(`Symptoms indexed: ${this.symptomDetector?.symptomIndex?.size || 0}`);
+            console.log(`Conditions indexed: ${this.conditionMapper?.conditionIndex?.size || 0}`);
+        } catch (error) {
+            console.warn('Using fallback data due to:', error);
+            this.initializeFallbackProcessors();
+            this.isReady = true;
+        }
+    }
+
+    async loadKnowledgeBasesRobustly() {
+        // HPO Loading with multiple fallback strategies
+        try {
+            const hpoResponse = await fetch('assets/hp.json');
+            if (hpoResponse.ok) {
+                this.hpoData = await hpoResponse.json();
+                console.log('HPO data loaded successfully');
+            } else {
+                throw new Error('HPO not available');
+            }
+        } catch (error) {
+            console.log('HPO not available, using sample data');
+            this.hpoData = this.createSampleHPOData();
+        }
+
+        // Biomedical KB with multiple format support
+        try {
+            const kbJsonResponse = await fetch('assets/Biomedical_Knowledgebase.json');
+            if (kbJsonResponse.ok) {
+                this.biomedicalKB = await kbJsonResponse.json();
+                console.log('Biomedical KB loaded from JSON');
+            } else {
+                const txtResponse = await fetch('assets/Biomedical_Knowledgebase.txt');
+                if (txtResponse.ok) {
+                    const text = await txtResponse.text();
+                    this.biomedicalKB = await this.parseTextKB(text);
+                    console.log('Biomedical KB parsed from text');
+                } else {
+                    throw new Error('KB not available');
                 }
-              }
-              
-              // Draw connections to children
-              if (node.children && node.children.length > 0) {
-                const childSpacing = Math.max(60, 300 / node.children.length);
-                
-                node.children.forEach((child, index) => {
-                  const childX = x + levelSpacing;
-                  const targetY = y + (index * childSpacing) - ((node.children.length - 1) * childSpacing / 2);
-                  
-                  // Enhanced connection styling based on success rate
-                  let connectionOpacity = '60';
-                  if (child.enhancedStatistics?.success?.mean) {
-                    connectionOpacity = Math.round(child.enhancedStatistics.success.mean * 100).toString(16).padStart(2, '0');
-                  }
-                  
-                  ctx.strokeStyle = colors[node.type] + connectionOpacity;
-                  ctx.lineWidth = child.enhancedStatistics?.success?.mean ? 
-                    2 + (child.enhancedStatistics.success.mean * 4) : 3;
-                  
-                  ctx.beginPath();
-                  ctx.moveTo(x + nodeWidth, y + nodeHeight / 2);
-                  ctx.bezierCurveTo(
-                    x + nodeWidth + 60, y + nodeHeight / 2,
-                    childX - 60, targetY + nodeHeight / 2,
-                    childX, targetY + nodeHeight / 2
-                  );
-                  ctx.stroke();
-                  
-                  // Recursively draw children
-                  drawAlluvialFlow(child, childX, targetY, level + 1);
-                });
-              }
+            }
+        } catch (error) {
+            console.log('Biomedical KB not available, using fallback');
+            this.biomedicalKB = this.createFallbackKB();
+        }
+    }
+
+    initializeProcessors() {
+        // Initialize the three main processors with loaded data
+        this.symptomDetector = new DynamicSymptomDetector(this.hpoData, this.biomedicalKB);
+        this.conditionMapper = new DynamicConditionMapper(this.biomedicalKB, this.hpoData);
+        this.narrativeBuilder = new ClinicalNarrativeBuilder();
+    }
+
+    initializeFallbackProcessors() {
+        // Initialize with minimal fallback data
+        const fallbackHPO = this.createSampleHPOData();
+        const fallbackKB = this.createFallbackKB();
+        
+        this.symptomDetector = new DynamicSymptomDetector(fallbackHPO, fallbackKB);
+        this.conditionMapper = new DynamicConditionMapper(fallbackKB, fallbackHPO);
+        this.narrativeBuilder = new ClinicalNarrativeBuilder();
+    }
+
+    // Main analysis method
+    async analyzeClinicalPresentation(text) {
+        if (!this.isReady) {
+            throw new Error('Clinical engine not ready');
+        }
+
+        console.log('=== Starting Enhanced Clinical Analysis ===');
+        console.log('Input text:', text);
+
+        // Step 1: Dynamic symptom detection
+        const detectedSymptoms = this.symptomDetector.detectSymptoms(text);
+        console.log('Detected symptoms:', detectedSymptoms);
+
+        // Step 2: Extract clinical context
+        const clinicalContext = this.extractClinicalContext(text);
+        console.log('Clinical context:', clinicalContext);
+
+        // Step 3: Map symptoms to conditions
+        const mappedConditions = this.conditionMapper.mapSymptomsToConditions(detectedSymptoms);
+        console.log('Mapped conditions:', mappedConditions);
+
+        // Step 4: Build comprehensive clinical workflow
+        const clinicalWorkflow = this.narrativeBuilder.buildComprehensiveClinicalWorkflow(
+            detectedSymptoms, 
+            mappedConditions, 
+            clinicalContext
+        );
+
+        const result = {
+            symptoms: detectedSymptoms,
+            clinicalContext,
+            conditions: mappedConditions,
+            workflow: clinicalWorkflow,
+            confidence: this.narrativeBuilder.calculateOverallConfidence(detectedSymptoms, mappedConditions)
+        };
+
+        console.log('=== Analysis Complete ===');
+        console.log('Final result:', result);
+
+        return result;
+    }
+
+    extractClinicalContext(text) {
+        const lowerText = text.toLowerCase();
+        const context = {};
+        
+        // Timing patterns
+        if (/\b(morning|wake|dawn|am)\b/.test(lowerText)) {
+            context.timing = 'morning';
+        } else if (/\b(evening|night|pm)\b/.test(lowerText)) {
+            context.timing = 'evening';
+        }
+        
+        // Frequency patterns
+        if (/\b(every day|daily)\b/.test(lowerText)) {
+            context.frequency = 'daily';
+        } else if (/\b(frequent|often)\b/.test(lowerText)) {
+            context.frequency = 'frequent';
+        }
+        
+        // Duration patterns
+        if (/\b(\d+)\s*(week|weeks)\b/.test(lowerText)) {
+            context.duration = 'weeks';
+        } else if (/\b(\d+)\s*(month|months)\b/.test(lowerText)) {
+            context.duration = 'months';
+        }
+        
+        // Systemic signs
+        if (/\b(fever|temperature)\b/.test(lowerText)) {
+            context.systemicSigns = context.systemicSigns || [];
+            context.systemicSigns.push('fever');
+        }
+        
+        // Patient presentation language
+        if (/\b(patient|presents|history)\b/.test(lowerText)) {
+            context.clinicalPresentation = true;
+        }
+        
+        return context;
+    }
+
+    // Fallback data creators
+    createSampleHPOData() {
+        return {
+            graphs: [{
+                nodes: [
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0000790",
+                        lbl: "Hematuria",
+                        meta: {
+                            definition: { val: "The presence of blood in the urine" },
+                            synonyms: [
+                                { val: "Blood in urine" },
+                                { val: "Bloody urine" }
+                            ]
+                        }
+                    },
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0012330",
+                        lbl: "Renal pain",
+                        meta: {
+                            definition: { val: "Pain originating from the kidney" },
+                            synonyms: [
+                                { val: "Kidney pain" },
+                                { val: "Flank pain" },
+                                { val: "Nephralgia" }
+                            ]
+                        }
+                    },
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0002315",
+                        lbl: "Headache",
+                        meta: {
+                            definition: { val: "Pain in the head or neck region" },
+                            synonyms: [
+                                { val: "Head pain" },
+                                { val: "Cephalgia" }
+                            ]
+                        }
+                    },
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0100749",
+                        lbl: "Chest pain",
+                        meta: {
+                            definition: { val: "Pain in the chest" },
+                            synonyms: [
+                                { val: "Thoracic pain" }
+                            ]
+                        }
+                    }
+                ]
+            }]
+        };
+    }
+
+    createFallbackKB() {
+        return {
+            symptoms: {
+                'hematuria': {
+                    name: 'Hematuria',
+                    properties: {
+                        description: 'Presence of blood in urine',
+                        associated_conditions: ['kidney_stones', 'urinary_tract_infection', 'bladder_cancer']
+                    }
+                },
+                'kidney_pain': {
+                    name: 'Kidney Pain',
+                    properties: {
+                        description: 'Pain in the kidney region',
+                        associated_conditions: ['kidney_stones', 'pyelonephritis']
+                    }
+                }
+            },
+            conditions: {
+                'kidney_stones': {
+                    name: 'Kidney Stones',
+                    properties: {
+                        description: 'Hard deposits in the kidney',
+                        severity: 'moderate to severe',
+                        prevalence: 0.1
+                    }
+                },
+                'urinary_tract_infection': {
+                    name: 'Urinary Tract Infection',
+                    properties: {
+                        description: 'Bacterial infection of the urinary system',
+                        severity: 'mild to moderate',
+                        prevalence: 0.15
+                    }
+                }
+            },
+            treatments: {
+                'pain_management': {
+                    name: 'Pain Management',
+                    properties: {
+                        description: 'Comprehensive pain relief therapy',
+                        efficacy: 0.85,
+                        cost: 300,
+                        side_effects: 0.15
+                    }
+                },
+                'antibiotics': {
+                    name: 'Antibiotic Therapy',
+                    properties: {
+                        description: 'Targeted antimicrobial treatment',
+                        efficacy: 0.90,
+                        cost: 150,
+                        side_effects: 0.20
+                    }
+                }
+            },
+            relationships: {
+                'kidney_stones': {
+                    symptoms: ['hematuria', 'kidney_pain'],
+                    treatments: ['pain_management', 'lithotripsy']
+                },
+                'urinary_tract_infection': {
+                    symptoms: ['hematuria'],
+                    treatments: ['antibiotics']
+                }
+            }
+        };
+    }
+
+    async parseTextKB(text) {
+        // Enhanced text parsing for biomedical knowledge
+        const kb = {
+            symptoms: {},
+            conditions: {},
+            treatments: {},
+            relationships: {}
+        };
+
+        // Extract medical terms using regex patterns
+        const medicalTerms = this.extractMedicalTermsFromText(text);
+        
+        // Process conditions
+        medicalTerms.conditions.forEach(condition => {
+            kb.conditions[condition.id] = {
+                name: condition.name,
+                properties: {
+                    description: condition.context,
+                    confidence: condition.confidence
+                }
             };
-            
-            if (workflow) {
-              drawAlluvialFlow(workflow, 20, 50, 0);
+        });
+
+        // Process symptoms  
+        medicalTerms.symptoms.forEach(symptom => {
+            kb.symptoms[symptom.id] = {
+                name: symptom.name,
+                properties: {
+                    description: symptom.context,
+                    confidence: symptom.confidence
+                }
+            };
+        });
+
+        // Process treatments
+        medicalTerms.treatments.forEach(treatment => {
+            kb.treatments[treatment.id] = {
+                name: treatment.name,
+                properties: {
+                    description: treatment.context,
+                    confidence: treatment.confidence
+                }
+            };
+        });
+
+        // Merge with fallback to ensure minimum viable data
+        const fallback = this.createFallbackKB();
+        Object.assign(kb.conditions, fallback.conditions);
+        Object.assign(kb.symptoms, fallback.symptoms);
+        Object.assign(kb.treatments, fallback.treatments);
+        Object.assign(kb.relationships, fallback.relationships);
+
+        return kb;
+    }
+
+    extractMedicalTermsFromText(text) {
+        const terms = {
+            conditions: [],
+            symptoms: [],
+            treatments: []
+        };
+
+        // Medical condition patterns
+        const conditionPatterns = [
+            /\b(\w+)\s+(syndrome|disease|disorder|condition|cancer|tumor|infection|itis|osis)\b/gi,
+            /\b(diabetes|hypertension|asthma|pneumonia|migraine|epilepsy)\b/gi
+        ];
+
+        // Symptom patterns
+        const symptomPatterns = [
+            /\b(pain|ache|headache|fever|nausea|fatigue|hematuria|dyspnea)\b/gi,
+            /\b(\w+)\s+(pain|ache|bleeding)\b/gi
+        ];
+
+        // Treatment patterns
+        const treatmentPatterns = [
+            /\b(\w+)\s+(therapy|treatment|medication|surgery)\b/gi,
+            /\b(antibiotics|analgesics|surgery|chemotherapy)\b/gi
+        ];
+
+        // Extract each type
+        this.extractTermsByPatterns(text, conditionPatterns, terms.conditions, 'condition');
+        this.extractTermsByPatterns(text, symptomPatterns, terms.symptoms, 'symptom');
+        this.extractTermsByPatterns(text, treatmentPatterns, terms.treatments, 'treatment');
+
+        return terms;
+    }
+
+    extractTermsByPatterns(text, patterns, termArray, type) {
+        const found = new Set();
+        
+        patterns.forEach(pattern => {
+            let match;
+            pattern.lastIndex = 0;
+            while ((match = pattern.exec(text)) !== null) {
+                const term = match[0].toLowerCase().trim();
+                if (term.length > 3 && !found.has(term)) {
+                    found.add(term);
+                    
+                    const start = Math.max(0, match.index - 100);
+                    const end = Math.min(text.length, match.index + match[0].length + 100);
+                    const context = text.substring(start, end).trim();
+                    
+                    termArray.push({
+                        id: term.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, ''),
+                        name: term,
+                        context: context,
+                        confidence: 0.7,
+                        type: type
+                    });
+                }
             }
+        });
+    }
+}
+
+
+        // Enhanced Clinical Display Components
+        const ClinicalAnalysisResults = ({ analysis }) => {
+            const [expandedNodes, setExpandedNodes] = React.useState(new Set(['root']));
             
-            setNodePositions(positions);
-          }, [workflow, selectedPath]);
-          
-          const handleCanvasClick = (e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const x = (e.clientX - rect.left) * 2; // Account for scaling
-            const y = (e.clientY - rect.top) * 2;
+            const toggleNode = (nodeId) => {
+                const newExpanded = new Set(expandedNodes);
+                if (newExpanded.has(nodeId)) {
+                    newExpanded.delete(nodeId);
+                } else {
+                    newExpanded.add(nodeId);
+                }
+                setExpandedNodes(newExpanded);
+            };
+
+            const renderWorkflowNode = (node, level = 0) => {
+                const isExpanded = expandedNodes.has(node.id);
+                const nodeColors = {
+                    symptom: 'bg-blue-100 border-blue-300',
+                    diagnosis: 'bg-green-100 border-green-300',
+                    treatment: 'bg-purple-100 border-purple-300',
+                    outcome: 'bg-orange-100 border-orange-300'
+                };
+                
+                const nodeIcons = {
+                    symptom: <AlertCircle className="w-4 h-4" />,
+                    diagnosis: <Brain className="w-4 h-4" />,
+                    treatment: <Activity className="w-4 h-4" />,
+                    outcome: <TrendingUp className="w-4 h-4" />
+                };
+
+                return (
+                    <div key={node.id} style={{ marginLeft: `${level * 20}px` }}>
+                        <div className={`p-3 rounded-lg border-2 ${nodeColors[node.type]} mb-2 cursor-pointer transition-all hover:shadow-md`}
+                             onClick={() => toggleNode(node.id)}>
+                            <div className="flex items-center gap-2">
+                                {nodeIcons[node.type]}
+                                <span className="font-medium">{node.title}</span>
+                                {node.children && node.children.length > 0 && (
+                                    <span className="text-xs bg-white px-2 py-1 rounded-full">
+                                        {isExpanded ? '−' : '+'}
+                                    </span>
+                                )}
+                            </div>
+                            
+                            {node.description && (
+                                <p className="text-sm text-gray-600 mt-1">{node.description}</p>
+                            )}
+                            
+                            {node.enhancedStatistics && (
+                                <div className="mt-3 space-y-2">
+                                    <div className="bg-white p-2 rounded border">
+                                        <div className="flex items-center gap-1 text-sm font-medium text-green-600">
+                                            <TrendingUp className="w-3 h-3" />
+                                            Success: {(node.enhancedStatistics.success.mean * 100).toFixed(1)}% ± {(node.enhancedStatistics.success.se * 100).toFixed(1)}%
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-white p-2 rounded border">
+                                        <div className="text-xs font-medium text-gray-700 mb-1">Comprehensive Costs</div>
+                                        <div className="grid grid-cols-2 gap-1 text-xs">
+                                            {Object.entries(node.enhancedStatistics.costBreakdown).map(([type, stats]) => (
+                                                <div key={type} className="flex items-center gap-1">
+                                                    {type === 'monetary' && <DollarSign className="w-3 h-3" />}
+                                                    {type === 'pain' && <Thermometer className="w-3 h-3" />}
+                                                    {type === 'emotional' && <Heart className="w-3 h-3" />}
+                                                    {type === 'social' && <Users className="w-3 h-3" />}
+                                                    {type === 'time' && <Clock className="w-3 h-3" />}
+                                                    <span className="capitalize">{type}:</span>
+                                                    <span>{stats.mean.toFixed(1)} ± {stats.se.toFixed(1)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {node.metadata && (
+                                <div className="mt-2 text-xs text-gray-500">
+                                    {node.metadata.severity && <div>Severity: {node.metadata.severity}</div>}
+                                    {node.metadata.chronicityRisk && <div>Chronicity Risk: {(node.metadata.chronicityRisk * 100).toFixed(0)}%</div>}
+                                    {node.metadata.evidenceLevel && <div>Evidence Level: {node.metadata.evidenceLevel}</div>}
+                                </div>
+                            )}
+                        </div>
+                        
+                        {isExpanded && node.children && node.children.map(child => 
+                            renderWorkflowNode(child, level + 1)
+                        )}
+                    </div>
+                );
+            };
+
+            return (
+                <div className="space-y-6">
+                    {/* Clinical Summary */}
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <Brain className="w-5 h-5 text-blue-600" />
+                            Enhanced Clinical Analysis Summary
+                        </h2>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                                <h3 className="font-medium text-blue-800 mb-2">Detected Symptoms</h3>
+                                <div className="space-y-2">
+                                    {analysis.symptoms.map((symptom, index) => (
+                                        <div key={index} className="bg-blue-100 p-3 rounded text-sm">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium capitalize">
+                                                    {symptom.severity !== 'moderate' && `${symptom.severity} `}
+                                                    {symptom.temporal !== 'acute' && `${symptom.temporal} `}
+                                                    {symptom.name}
+                                                </span>
+                                                <span className="text-xs bg-blue-200 px-2 py-1 rounded">
+                                                    {(symptom.confidence * 100).toFixed(0)}%
+                                                </span>
+                                            </div>
+{(symptom.hpoTerms || symptom.hpoId || symptom.synonyms) && (
+    <div className="mt-1 text-xs text-blue-600">
+        {symptom.hpoId && `HPO: ${symptom.hpoId}`}
+        {symptom.hpoTerms && symptom.hpoTerms.length > 0 && ` | Terms: ${symptom.hpoTerms.join(', ')}`}
+        {symptom.synonyms && symptom.synonyms.length > 0 && ` | Synonyms: ${symptom.synonyms.slice(0, 2).join(', ')}`}
+        {symptom.matchedTerm && ` | Matched: "${symptom.matchedTerm}"`}
+    </div>
+)}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            <div className="bg-green-50 p-4 rounded-lg">
+                                <h3 className="font-medium text-green-800 mb-2">Clinical Conditions</h3>
+                                <div className="space-y-2">
+                                    {analysis.conditions.map((condition, index) => (
+                                        <div key={index} className="bg-green-100 p-3 rounded text-sm">
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-medium">{condition.name}</span>
+                                                <span className="text-xs bg-green-200 px-2 py-1 rounded">
+                                                    {(condition.adjustedProbability * 100).toFixed(1)}%
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-green-600 mt-1">
+                                                {condition.prognosis}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="mt-4 bg-purple-50 p-4 rounded-lg">
+                            <h3 className="font-medium text-purple-800 mb-2">Analysis Quality</h3>
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-gray-200 rounded-full h-3">
+                                    <div 
+                                        className="bg-purple-500 h-3 rounded-full transition-all duration-300"
+                                        style={{ width: `${analysis.confidence * 100}%` }}
+                                    ></div>
+                                </div>
+                                <span className="text-sm font-medium">
+                                    {(analysis.confidence * 100).toFixed(1)}%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Clinical Workflow */}
+                    {analysis.workflow && (
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h2 className="text-xl font-semibold mb-4">Enhanced Clinical Decision Workflow</h2>
+                            
+                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6">
+                                <h3 className="font-semibold text-gray-800 mb-2">Comprehensive Cost Analysis</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                                    <div className="flex items-center gap-1">
+                                        <DollarSign className="w-3 h-3 text-green-600" />
+                                        <span><strong>Monetary:</strong> Direct costs</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Thermometer className="w-3 h-3 text-red-600" />
+                                        <span><strong>Pain:</strong> Physical discomfort</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Heart className="w-3 h-3 text-pink-600" />
+                                        <span><strong>Emotional:</strong> Psychological impact</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Users className="w-3 h-3 text-blue-600" />
+                                        <span><strong>Social:</strong> Relationship impact</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3 text-purple-600" />
+                                        <span><strong>Time:</strong> Treatment duration</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="max-h-96 overflow-y-auto">
+                                {renderWorkflowNode(analysis.workflow)}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Main Application Component
+        const ImprovedClinicalApp = () => {
             
-            // Check if click is within any node
-            for (const [nodeId, pos] of nodePositions) {
-              if (x >= pos.x && x <= pos.x + pos.width && 
-                  y >= pos.y && y <= pos.y + pos.height) {
-                setHoveredNode(pos.node);
-                if (onNodeClick) onNodeClick(pos.node);
-                break;
-              }
+// const [clinicalEngine] = React.useState(() => new ClinicalIntelligenceEngine());
+const [clinicalEngine] = React.useState(() => new EnhancedClinicalIntelligenceEngine());
+    
+
+            const [isReady, setIsReady] = React.useState(false);
+            const [userInput, setUserInput] = React.useState('');
+            const [analysis, setAnalysis] = React.useState(null);
+            const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+            const [analysisProgress, setAnalysisProgress] = React.useState(0);
+
+            React.useEffect(() => {
+                const checkReady = () => {
+                    if (clinicalEngine.isReady) {
+                        setIsReady(true);
+                    } else {
+                        setTimeout(checkReady, 100);
+                    }
+                };
+                checkReady();
+            }, [clinicalEngine]);
+
+            const handleAnalysis = async () => {
+                setIsAnalyzing(true);
+                setAnalysisProgress(0);
+                
+                try {
+                    const steps = [
+                        'Initializing clinical analysis...',
+                        'Detecting symptoms with HPO integration...',
+                        'Analyzing clinical conditions...',
+                        'Generating treatment pathways...',
+                        'Running statistical simulations...',
+                        'Synthesizing clinical workflow...'
+                    ];
+                    
+                    for (let i = 0; i < steps.length; i++) {
+                        setAnalysisProgress((i / steps.length) * 100);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    const result = await clinicalEngine.analyzeClinicalPresentation(userInput);
+                    setAnalysis(result);
+                    setAnalysisProgress(100);
+                    
+                } catch (error) {
+                    console.error('Analysis error:', error);
+                } finally {
+                    setIsAnalyzing(false);
+                }
+            };
+
+            const exportResults = () => {
+                if (!analysis) return;
+                
+                const results = {
+                    input: userInput,
+                    analysis: analysis,
+                    timestamp: new Date().toISOString(),
+                    version: '1.0-Enhanced'
+                };
+                
+                const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `enhanced-clinical-analysis-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            if (!isReady) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md mx-auto">
+                            <div className="text-center">
+                                <div className="loading-spinner mx-auto mb-4"></div>
+                                <h2 className="text-xl font-semibold mb-2">Initializing Clinical Engine</h2>
+                                <p className="text-gray-600">Loading enhanced knowledge bases...</p>
+                            </div>
+                        </div>
+                    </div>
+                );
             }
-          };
-          
-          return (
-            <div className="relative">
-              <canvas
-                ref={canvasRef}
-                className="w-full h-96 border border-gray-300 rounded-lg bg-white cursor-pointer"
-                onClick={handleCanvasClick}
-              />
-              
-              {/* Tooltip for hovered node */}
-              {hoveredNode && hoveredNode.enhancedStatistics && (
-                <div className="absolute top-4 right-4 bg-white p-3 rounded-lg shadow-lg border max-w-xs">
-                  <h4 className="font-semibold text-sm mb-2">{hoveredNode.title}</h4>
-                  <div className="text-xs space-y-1">
-                    <div>Success: {hoveredNode.enhancedStatistics.success?.mean?.toFixed(3) || '0.000'} ± {hoveredNode.enhancedStatistics.success?.se?.toFixed(3) || '0.000'}</div>
-                    <div>Total Cost: ${Math.round(hoveredNode.enhancedStatistics.cost?.mean || 0)} ± ${Math.round(hoveredNode.enhancedStatistics.cost?.se || 0)}</div>
-                    {hoveredNode.enhancedStatistics.costBreakdown && (
-                      <div className="border-t pt-1 mt-1">
-                        <div className="font-medium">Cost Breakdown:</div>
-                        {Object.entries(hoveredNode.enhancedStatistics.costBreakdown).map(([type, stats]) => (
-                         <div key={type} className="flex justify-between">
-                           <span className="capitalize">{type}:</span>
-                           <span>{stats?.mean?.toFixed(1) || '0.0'}</span>
-                         </div>
-                       ))}
-                     </div>
-                   )}
-                 </div>
-               </div>
-             )}
-           </div>
-         );
-       };
 
-       // Enhanced Workflow Node with comprehensive cost breakdown
-       const EnhancedWorkflowNode = ({ node, level, onExpand, isExpanded }) => {
-         const getNodeColor = (type) => {
-           switch (type) {
-             case 'symptom': return 'bg-blue-100 border-blue-300';
-             case 'diagnosis': return 'bg-green-100 border-green-300';
-             case 'treatment': return 'bg-purple-100 border-purple-300';
-             case 'outcome': return 'bg-orange-100 border-orange-300';
-             default: return 'bg-gray-100 border-gray-300';
-           }
-         };
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+                    {/* Header */}
+                    <nav className="bg-white shadow-lg border-b-4 border-blue-600">
+                        <div className="max-w-7xl mx-auto px-6 py-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                    <div className="w-12 h-12 flex items-center justify-center">
+                                        <img src="SOCR_Logo.png" alt="SOCR Logo" className="w-12 h-12 object-contain" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-gray-800">CLNQ: AI Clinical Decision Support (Gen-1)</h1>
+                                        <p className="text-sm text-gray-600">SOCR AI Clinical Decision Support Platform (Enhanced Gen-0)</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-6">
+                                    <div className="flex items-center gap-2">
+                                        <Database className="w-4 h-4 text-green-500" />
+                                        <span className="text-sm text-green-600">Enhanced Engine Ready</span>
+                                    </div>
+                                    <a href="https://www.socr.umich.edu/" target="_blank" rel="noopener noreferrer" 
+                                       className="text-blue-600 hover:text-blue-800 transition-colors">
+                                        Visit SOCR.umich.edu
+                                    </a>
+                                    <div className="text-blue-600 hover:text-blue-800 transition-colors">
+                       					<a href="https://www.socr.umich.edu/GAIM" target="_blank" rel="noopener noreferrer" 
+                        					className="text-blue-600 hover:text-blue-800 transition-colors">Other SOCR GAIM Platforms</a>
+                     				</div>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
 
-         const getIcon = (type) => {
-           switch (type) {
-             case 'symptom': return <AlertCircle className="w-4 h-4" />;
-             case 'diagnosis': return <Brain className="w-4 h-4" />;
-             case 'treatment': return <Activity className="w-4 h-4" />;
-             case 'outcome': return <TrendingUp className="w-4 h-4" />;
-             default: return <Zap className="w-4 h-4" />;
-           }
-         };
+                    <div className="p-6">
+                        <div className="max-w-7xl mx-auto">
+                            {/* Introduction */}
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                                    Enhanced Clinical Decision Support System
+                                </h1>
+                                <p className="text-gray-600 mb-4">
+                                    Extending CLNQ Gen-0 with Gen-1 Phenotypic Ontology for Optimal Clinical Insights
+                                </p>
+                                <div className="flex gap-2 mb-4 text-sm">
+                                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">V.1 Clinical Coherence</span>
+                                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">HPO Integration</span>
+                                    <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">Enhanced Knowledge Base</span>
+                                    <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full">Statistical Modeling</span>
+                                </div>
+                            </div>
 
-         const costIcons = {
-           monetary: <DollarSign className="w-3 h-3" />,
-           pain: <Thermometer className="w-3 h-3" />,
-           emotional: <Heart className="w-3 h-3" />,
-           social: <Users className="w-3 h-3" />,
-           time: <Clock className="w-3 h-3" />
-         };
+                            {/* Input Section */}
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                                <h2 className="text-xl font-semibold mb-4">Clinical Presentation Analysis</h2>
+                                <textarea
+                                    value={userInput}
+                                    onChange={(e) => setUserInput(e.target.value)}
+                                    placeholder="Describe the clinical presentation. Example: 'Patient presents with severe, throbbing headaches occurring every morning for the past 2 weeks, accompanied by nausea and sensitivity to light. The headaches are interfering with daily activities.'"
+                                    className="w-full h-32 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <div className="flex gap-4 mt-4">
+                                    <button
+                                        onClick={handleAnalysis}
+                                        disabled={!userInput.trim() || isAnalyzing}
+                                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        {isAnalyzing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                        {isAnalyzing ? 'Analyzing...' : 'Enhanced Clinical Analysis'}
+                                    </button>
+                                    {analysis && (
+                                        <button
+                                            onClick={exportResults}
+                                            className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            Export Results
+                                        </button>
+                                    )}
+                                </div>
+                                
+                                {isAnalyzing && (
+                                    <div className="mt-4">
+                                        <div className="bg-gray-200 rounded-full h-3">
+                                            <div 
+                                                className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                                                style={{ width: `${analysisProgress}%` }}
+                                            ></div>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mt-2">
+                                            Running enhanced clinical analysis with HPO integration and statistical modeling...
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
 
-         return (
-           <div className={`p-3 rounded-lg border-2 ${getNodeColor(node.type)} mb-2 cursor-pointer transition-all hover:shadow-md`}
-                onClick={() => onExpand(node.id)}
-                style={{ marginLeft: `${level * 20}px` }}>
-             <div className="flex items-center gap-2">
-               {getIcon(node.type)}
-               <span className="font-medium">{node.title}</span>
-               {node.children && node.children.length > 0 && (
-                 <span className="text-xs bg-white px-2 py-1 rounded-full">
-                   {isExpanded ? '−' : '+'}
-                 </span>
-               )}
-             </div>
-             
-             {node.description && (
-               <p className="text-sm text-gray-600 mt-1">{node.description}</p>
-             )}
-             
-             {node.enhancedStatistics && (
-               <div className="mt-3 space-y-2">
-                 <div className="bg-white p-2 rounded border">
-                   <div className="flex items-center gap-1 text-sm font-medium text-green-600">
-                     <TrendingUp className="w-3 h-3" />
-                     Success: {node.enhancedStatistics.success && typeof node.enhancedStatistics.success.mean === 'number' ? 
-                       node.enhancedStatistics.success.mean.toFixed(3) : '0.000'} ± {
-                       node.enhancedStatistics.success && typeof node.enhancedStatistics.success.se === 'number' ? 
-                       node.enhancedStatistics.success.se.toFixed(3) : '0.000'}
-                   </div>
-                 </div>
-                 
-                 <div className="bg-white p-2 rounded border">
-                   <div className="text-xs font-medium text-gray-700 mb-1">Comprehensive Costs</div>
-                   <div className="grid grid-cols-2 gap-1 text-xs">
-                     {node.enhancedStatistics.costBreakdown && Object.entries(node.enhancedStatistics.costBreakdown).map(([type, stats]) => (
-                       <div key={`cost-${type}`} className="flex items-center gap-1">
-                         {costIcons[type]}
-                         <span className="capitalize">{String(type)}:</span>
-                         <span>{stats && typeof stats.mean === 'number' ? stats.mean.toFixed(1) : '0.0'} ± {stats && typeof stats.se === 'number' ? stats.se.toFixed(1) : '0.0'}</span>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               </div>
-             )}
-             
-             {node.metadata && (
-               <div className="mt-2 text-xs text-gray-500">
-                 <div>Severity: {String(node.metadata.severity || 'Unknown')}</div>
-                 <div>Chronicity Risk: {node.metadata.chronicityRisk ? `${(node.metadata.chronicityRisk * 100).toFixed(0)}%` : 'N/A'}</div>
-               </div>
-             )}
-           </div>
-         );
-       };
+                            {/* Results */}
+                            {analysis && (
+                                <ClinicalAnalysisResults analysis={analysis} />
+                            )}
+                        </div>
+                    </div>
 
-       // Enhanced workflow generation with comprehensive pathways
-       const generateEnhancedWorkflow = (analysisResult) => {
-         const { symptoms, severity, temporal, frequency } = analysisResult;
-         let nodeId = 0;
-         
-         // Root node with enhanced symptom analysis
-         const rootNode = {
-           id: nodeId++,
-           type: 'symptom',
-           title: 'Symptom Complex',
-           description: `${symptoms.join(', ')} with ${Object.entries(severity).map(([s, sev]) => `${s}: ${sev}`).join(', ')}`,
-           children: [],
-           metadata: { severity, temporal, frequency }
-         };
-         
-         // Get all potential conditions with confidence scoring
-         const conditionScores = new Map();
-         
-         symptoms.forEach(symptom => {
-           if (enhancedBiomedicalKnowledge.symptoms[symptom]) {
-             enhancedBiomedicalKnowledge.symptoms[symptom].conditions.forEach(condition => {
-               const currentScore = conditionScores.get(condition) || 0;
-               const symptomWeight = enhancedBiomedicalKnowledge.symptoms[symptom].frequency;
-               conditionScores.set(condition, currentScore + symptomWeight);
-             });
-           }
-         });
-         
-         // Sort conditions by likelihood and take top 5
-         const topConditions = Array.from(conditionScores.entries())
-           .sort(([,a], [,b]) => b - a)
-           .slice(0, 5)
-           .map(([condition]) => condition);
-         
-         // Create comprehensive diagnostic nodes
-         topConditions.forEach(condition => {
-           const conditionData = enhancedBiomedicalKnowledge.conditions[condition];
-           if (!conditionData) return; // Skip if no data available
-           
-           const diagnosisNode = {
-             id: nodeId++,
-             type: 'diagnosis',
-             title: condition.replace(/_/g, ' ').toUpperCase(),
-             description: `${conditionData.prognosis}`,
-             children: [],
-             metadata: {
-               severity: conditionData.severity,
-               chronicityRisk: conditionData.chronicityRisk,
-               confidence: conditionScores.get(condition) / symptoms.length
-             }
-           };
-           
-           // Create treatment nodes for each available treatment
-           if (conditionData.treatments && conditionData.treatments.length > 0) {
-             conditionData.treatments.forEach(treatment => {
-               const treatmentData = enhancedBiomedicalKnowledge.treatments[treatment];
-               if (!treatmentData) return; // Skip if no treatment data
-               
-               const treatmentNode = {
-                 id: nodeId++,
-                 type: 'treatment',
-                 title: treatment.replace(/_/g, ' ').toUpperCase(),
-                 description: `${treatmentData.contraindications.length > 0 ? 
-                   'Contraindications: ' + treatmentData.contraindications.join(', ') : 
-                   'Standard treatment protocol'}`,
-                 children: [],
-                 metadata: {
-                   efficacy: treatmentData.efficacy,
-                   sideEffects: treatmentData.sideEffects,
-                   contraindications: treatmentData.contraindications
-                 }
-               };
-               
-               // Create outcome node with enhanced statistics
-               const enhancedStats = runEnhancedSimulations(condition, treatment);
-               const outcomeNode = {
-                 id: nodeId++,
-                 type: 'outcome',
-                 title: 'Expected Outcome',
-                 description: `${conditionData.prognosis}. Side effect probability: ${(treatmentData.sideEffects * 100).toFixed(1)}%`,
-                 enhancedStatistics: enhancedStats,
-                 metadata: {
-                   severity: conditionData.severity,
-                   chronicityRisk: conditionData.chronicityRisk,
-                   expectedDuration: temporal[symptoms[0]] === 'chronic' ? 'Long-term' : 'Short-term'
-                 }
-               };
-               
-               treatmentNode.children.push(outcomeNode);
-               diagnosisNode.children.push(treatmentNode);
-             });
-           }
-           
-           rootNode.children.push(diagnosisNode);
-         });
-         
-         return rootNode;
-       };
-
-       // Main Application Component
-       const EnhancedClinicalDecisionApp = () => {
-         const [userInput, setUserInput] = React.useState('');
-         const [workflow, setWorkflow] = React.useState(null);
-         const [expandedNodes, setExpandedNodes] = React.useState(new Set());
-         const [isAnalyzing, setIsAnalyzing] = React.useState(false);
-         const [analysisProgress, setAnalysisProgress] = React.useState(0);
-         const [nlpResults, setNlpResults] = React.useState(null);
-         const [selectedPath, setSelectedPath] = React.useState(null);
-         const [viewMode, setViewMode] = React.useState('tree'); // 'tree' or 'alluvial'
-
-         const handleAnalyze = async () => {
-           setIsAnalyzing(true);
-           setAnalysisProgress(0);
-           
-           // Simulate enhanced analysis with progress steps
-           const steps = [
-             'Parsing natural language input...',
-             'Extracting symptoms and modifiers...',
-             'Consulting biomedical knowledge base...',
-             'Cross-referencing HPO ontology...',
-             'Generating diagnostic hypotheses...',
-             'Running Monte Carlo simulations...',
-             'Calculating comprehensive costs...',
-             'Building decision pathways...'
-           ];
-           
-           for (let i = 0; i < steps.length; i++) {
-             setAnalysisProgress((i / steps.length) * 100);
-             await new Promise(resolve => setTimeout(resolve, 500));
-           }
-           
-           // Perform enhanced NLP analysis
-           const analysisResult = parseSymptoms(userInput);
-           setNlpResults(analysisResult);
-           
-           // Generate enhanced workflow
-           const generatedWorkflow = generateEnhancedWorkflow(analysisResult);
-           setWorkflow(generatedWorkflow);
-           setExpandedNodes(new Set([generatedWorkflow.id]));
-           setIsAnalyzing(false);
-         };
-
-         const toggleNodeExpansion = (nodeId) => {
-           const newExpanded = new Set(expandedNodes);
-           if (newExpanded.has(nodeId)) {
-             newExpanded.delete(nodeId);
-           } else {
-             newExpanded.add(nodeId);
-           }
-           setExpandedNodes(newExpanded);
-         };
-
-         const renderWorkflowTree = (node, level = 0) => {
-           if (!node) return null;
-           
-           const isExpanded = expandedNodes.has(node.id);
-           
-           return (
-             <div key={node.id}>
-               <EnhancedWorkflowNode 
-                 node={node} 
-                 level={level} 
-                 onExpand={toggleNodeExpansion}
-                 isExpanded={isExpanded}
-               />
-               {isExpanded && node.children && node.children.map(child => 
-                 renderWorkflowTree(child, level + 1)
-               )}
-             </div>
-           );
-         };
-
-         const exportResults = () => {
-           const results = {
-             input: userInput,
-             nlpAnalysis: nlpResults,
-             workflow: workflow,
-             timestamp: new Date().toISOString()
-           };
-           
-           const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
-           const url = URL.createObjectURL(blob);
-           const a = document.createElement('a');
-           a.href = url;
-           a.download = 'enhanced-clinical-analysis.json';
-           a.click();
-           URL.revokeObjectURL(url);
-         };
-
-         return (
-           <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-             {/* SOCR Navbar */}
-             <nav className="bg-white shadow-lg border-b-4 border-blue-600">
-               <div className="max-w-7xl mx-auto px-6 py-4">
-                 <div className="flex items-center justify-between">
-                   <div className="flex items-center space-x-4">
-                     {/* SOCR Logo */}
-                     
-		     <div className="w-12 h-12 flex items-center justify-center">
-                                    <img src="SOCR_Logo.png" alt="SOCR Logo" className="w-12 h-12 object-contain" />
-                     </div>
-                     <div>
-                       <h1 className="text-2xl font-bold text-gray-800">CLNQ: AI Clinical Decision Support (Gen-0)</h1>
-                       <p className="text-sm text-gray-600">Statistics Online Computational Resource</p>
-                     </div>
-                   </div>
-                   <div className="flex items-center space-x-6">
-                     <a href="https://www.socr.umich.edu/" target="_blank" rel="noopener noreferrer" 
-                        className="text-blue-600 hover:text-blue-800 transition-colors">
-                       Visit SOCR.umich.edu
-                     </a>
-					 <div className="text-blue-600 hover:text-blue-800 transition-colors">
-                       <a href="https://www.socr.umich.edu/GAIM" target="_blank" rel="noopener noreferrer" 
-                        className="text-blue-600 hover:text-blue-800 transition-colors">Other SOCR GAIM Platforms</a>
-                     </div>
-                     <div className="text-sm text-gray-500">
-                       University of Michigan
-                     </div>
-                   </div>
-                 </div>
-               </div>
-             </nav>
-
-             <div className="p-6">
-               <div className="max-w-7xl mx-auto">
-                 {/* Header */}
-                 <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-                   <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                     Enhanced Clinical Decision Support System
-                   </h1>
-                   <p className="text-gray-600 mb-4">
-                     AI-Powered Diagnostic, Treatment & Prognostic Analysis with Comprehensive Cost Modeling
-                   </p>
-                   <div className="flex gap-2 mb-4 text-sm">
-                     <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">Advanced NLP</span>
-                     <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">HPO Integration</span>
-                     <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">Monte Carlo Simulations</span>
-                     <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full">Comprehensive Costs</span>
-                   </div>
-                   
-                   {/* View Mode Toggle */}
-                   <div className="flex gap-2">
-                     <button
-                       onClick={() => setViewMode('tree')}
-                       className={`px-4 py-2 rounded-lg transition-colors ${
-                         viewMode === 'tree' 
-                           ? 'bg-blue-600 text-white' 
-                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                       }`}
-                     >
-                       Tree View
-                     </button>
-                     <button
-                       onClick={() => setViewMode('alluvial')}
-                       className={`px-4 py-2 rounded-lg transition-colors ${
-                         viewMode === 'alluvial' 
-                           ? 'bg-blue-600 text-white' 
-                           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                       }`}
-                     >
-                       Alluvial Flow
-                     </button>
-                   </div>
-                 </div>
-
-                 {/* Input Section */}
-                 <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-                   <h2 className="text-xl font-semibold mb-4">Describe Your Health Concern</h2>
-                   <textarea
-                     value={userInput}
-                     onChange={(e) => setUserInput(e.target.value)}
-                     placeholder="I have frequent and severe headaches every morning, which are coupled with body chills and fatigue. The headaches are excruciating and have been constant for the past week."
-                     className="w-full h-32 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                   />
-                   <div className="flex gap-4 mt-4">
-                     <button
-                       onClick={handleAnalyze}
-                       disabled={!userInput.trim() || isAnalyzing}
-                       className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                     >
-                       {isAnalyzing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                       {isAnalyzing ? 'Analyzing...' : 'Enhanced Analysis'}
-                     </button>
-                     {workflow && (
-                       <button
-                         onClick={exportResults}
-                         className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-                       >
-                         <Download className="w-4 h-4" />
-                         Export Results
-                       </button>
-                     )}
-                   </div>
-                   
-                   {isAnalyzing && (
-                     <div className="mt-4">
-                       <div className="bg-gray-200 rounded-full h-3">
-                         <div 
-                           className="bg-blue-600 h-3 rounded-full transition-all duration-500"
-                           style={{ width: `${analysisProgress}%` }}
-                         ></div>
-                       </div>
-                       <p className="text-sm text-gray-600 mt-2">
-                         Processing enhanced biomedical knowledge bases and running comprehensive simulations...
-                       </p>
-                     </div>
-                   )}
-                 </div>
-
-                 {/* NLP Analysis Results */}
-                 {nlpResults && (
-                   <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-                     <h2 className="text-xl font-semibold mb-4">NLP Analysis Results</h2>
-                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                       <div className="bg-blue-50 p-4 rounded-lg">
-                         <h3 className="font-medium text-blue-800 mb-2">Extracted Symptoms</h3>
-                         <div className="space-y-1">
-                           {nlpResults.symptoms && nlpResults.symptoms.map((symptom, index) => (
-                             <span key={`${symptom}-${index}`} className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm mr-1">
-                               {String(symptom).replace(/_/g, ' ')}
-                             </span>
-                           ))}
-                         </div>
-                       </div>
-                       <div className="bg-green-50 p-4 rounded-lg">
-                         <h3 className="font-medium text-green-800 mb-2">Severity Assessment</h3>
-                         <div className="space-y-1 text-sm">
-                           {nlpResults.severity && Object.entries(nlpResults.severity).map(([symptom, level]) => (
-                             <div key={`severity-${symptom}`} className="flex justify-between">
-                               <span>{String(symptom).replace(/_/g, ' ')}:</span>
-                               <span className="font-medium">{String(level)}</span>
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-                       <div className="bg-purple-50 p-4 rounded-lg">
-                         <h3 className="font-medium text-purple-800 mb-2">Temporal Patterns</h3>
-                         <div className="space-y-1 text-sm">
-                           {nlpResults.temporal && Object.entries(nlpResults.temporal).map(([symptom, pattern]) => (
-                             <div key={`temporal-${symptom}`} className="flex justify-between">
-                               <span>{String(symptom).replace(/_/g, ' ')}:</span>
-                               <span className="font-medium">{String(pattern)}</span>
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 )}
-
-                 {/* Results Section */}
-                 {workflow && (
-                   <div className="bg-white rounded-xl shadow-lg p-6">
-                     <h2 className="text-xl font-semibold mb-4">Enhanced Clinical Decision Workflow</h2>
-                     
-                     <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6">
-                       <h3 className="font-semibold text-gray-800 mb-2">Comprehensive Cost Analysis</h3>
-                       <p className="text-sm text-gray-600 mb-3">
-                         Our enhanced system now includes multi-dimensional cost analysis:
-                       </p>
-                       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
-                         <div className="flex items-center gap-1">
-                           <DollarSign className="w-3 h-3 text-green-600" />
-                           <span><strong>Monetary:</strong> Direct financial costs</span>
-                         </div>
-                         <div className="flex items-center gap-1">
-                           <Thermometer className="w-3 h-3 text-red-600" />
-                           <span><strong>Pain:</strong> Physical discomfort levels</span>
-                         </div>
-                         <div className="flex items-center gap-1">
-                           <Heart className="w-3 h-3 text-pink-600" />
-                           <span><strong>Emotional:</strong> Psychological stress</span>
-                         </div>
-                         <div className="flex items-center gap-1">
-                           <Users className="w-3 h-3 text-blue-600" />
-                           <span><strong>Social:</strong> Impact on relationships</span>
-                         </div>
-                         <div className="flex items-center gap-1">
-                           <Clock className="w-3 h-3 text-purple-600" />
-                           <span><strong>Time:</strong> Treatment duration</span>
-                         </div>
-                       </div>
-                     </div>
-                     
-                     {/* Workflow Visualization */}
-                     {viewMode === 'alluvial' ? (
-                       <div className="mb-6">
-                         <h3 className="font-semibold mb-3">Interactive Alluvial Flow Diagram with Quantitative Outcomes</h3>
-                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-sm">
-                           <div className="flex items-start gap-2">
-                             <Eye className="w-4 h-4 text-yellow-600 mt-0.5" />
-                             <div>
-                               <strong>Enhanced Alluvial Features:</strong>
-                               <ul className="mt-1 space-y-1 text-xs">
-                                 <li>• <strong>Outcome nodes</strong> show SUCCESS probability and COST estimates directly in flow</li>
-                                 <li>• <strong>Connection thickness</strong> represents treatment success likelihood</li>
-                                 <li>• <strong>Cost indicators:</strong> Pain, Emot=Emotional, Soc=Social, Time=Time commitment</li>
-                                 <li>• <strong>Click nodes</strong> for detailed breakdown in tooltip</li>
-                               </ul>
-                             </div>
-                           </div>
-                         </div>
-                         <AlluvialFlow 
-                           workflow={workflow} 
-                           onNodeClick={(node) => setSelectedPath(node)}
-                           selectedPath={selectedPath}
-                         />
-                         <p className="text-xs text-gray-500 mt-2">
-                           Red-bordered outcome nodes display quantitative results. Connection opacity and thickness indicate success probability.
-                         </p>
-                       </div>
-                     ) : (
-                       <div className="max-h-96 overflow-y-auto">
-                         {renderWorkflowTree(workflow)}
-                       </div>
-                     )}
-                     
-                     <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-                       <h3 className="font-semibold text-gray-800 mb-2">Enhanced Data Integration</h3>
-                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                         <div>
-                           <strong>Biomedical Knowledgebase:</strong> Expanded symptom-condition mappings with severity indicators and treatment protocols
-                         </div>
-                         <div>
-                           <strong>Enhanced HPO:</strong> Comprehensive phenotype ontology with synonyms and relationship mapping
-                         </div>
-                         <div>
-                           <strong>Advanced NLP:</strong> Multi-pattern extraction for symptoms, severity, temporal patterns, and frequency analysis
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                 )}
-               </div>
-             </div>
-
-             {/* SOCR Footer */}
-             <footer className="bg-gray-800 text-white mt-12">
-               <div className="max-w-7xl mx-auto px-6 py-8">
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                   <div>
-                     <div className="flex items-center space-x-3 mb-4">
-                       <div className="w-12 h-12 flex items-center justify-center">
-                                    <img src="SOCR_Logo.png" alt="SOCR Logo" className="w-12 h-12 object-contain" />
-                       </div>
-                       <div>
-                         <h3 className="text-lg font-semibold">SOCR</h3>
-                         <p className="text-sm text-gray-300">Statistics Online Computational Resource</p>
-                       </div>
-                     </div>
-                     <p className="text-gray-300 text-sm">
-                       Advancing data science education and research through innovative computational tools and methodologies.
-                     </p>
-					 <ul className="space-y-2 text-sm">
+                    {/* Footer */}
+                    <footer className="bg-gray-800 text-white mt-12">
+                        <div className="max-w-7xl mx-auto px-6 py-8">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div>
+                                    <div className="flex items-center space-x-3 mb-4">
+                                        <div className="w-12 h-12 flex items-center justify-center">
+                                            <img src="SOCR_Logo.png" alt="SOCR Logo" className="w-12 h-12 object-contain" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-semibold">SOCR Enhanced Clinical AI</h3>
+                                            <p className="text-sm text-gray-300">CLNQ Gen-1 with Clinical Coherence</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-300 text-sm">
+                                        Improving CLNQ Gen-0 clinical decision support.
+                                    </p>
+					<ul className="space-y-2 text-sm">
                        <li>
-                         <a href="https://socr.umich.edu/GAIM/SOCR_CLNQ_1.html" className="text-blue-400 hover:text-blue-300 transition-colors">
-                           CLNQ Gen-1</a>
+                         <a href="https://socr.umich.edu/GAIM/SOCR_CLNQ_0.html" className="text-blue-400 hover:text-blue-300 transition-colors">
+                           CLNQ Gen-0</a>
                        </li>
                        <li>
                          <a href="https://socr.umich.edu/GAIM/SOCR_CLNQ_2.html" className="text-blue-400 hover:text-blue-300 transition-colors">
@@ -1124,116 +2148,95 @@
                            CLNQ Gen-4</a>
                        </li>
                      </ul>
-                   </div>
-                   
-                   <div>
-                     <h4 className="text-lg font-semibold mb-4">Clinical AI Platform</h4>
-                     <ul className="space-y-2 text-sm text-gray-300">
-                       <li>• Advanced NLP Symptom Analysis</li>
-                       <li>• Biomedical Knowledge Integration</li>
-                       <li>• Monte Carlo Statistical Modeling</li>
-                       <li>• Comprehensive Cost Analysis</li>
-                       <li>• Interactive Decision Pathways</li>
-                     </ul>
-                   </div>
-                   
-                   <div>
-                     <h4 className="text-lg font-semibold mb-4">Resources</h4>
-                     <ul className="space-y-2 text-sm">
-                       <li>
-                         <a href="https://www.socr.umich.edu/" className="text-blue-400 hover:text-blue-300 transition-colors">
-                           SOCR Main Site
-                         </a>
-                       </li>
-                       <li>
-                         <a href="https://www.socr.umich.edu/htmls/SOCR_Data.html" className="text-blue-400 hover:text-blue-300 transition-colors">
-                           Datasets & Tools
-                         </a>
-                       </li>
-                       <li>
-                         <a href="https://www.socr.umich.edu/htmls/SOCR_EducationalMaterials.html" className="text-blue-400 hover:text-blue-300 transition-colors">
-                           Educational Materials
-                         </a>
-                       </li>
-                       <li>
-                         <a href="https://github.com/SOCR" className="text-blue-400 hover:text-blue-300 transition-colors">
-                           GitHub Repository
-                         </a>
-                       </li>
-                     </ul>
-                   </div>
-                 </div>
-                 
-                 <div className="border-t border-gray-700 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
-                   <div className="text-sm text-gray-400">
-                     © 2025 SOCR - University of Michigan. All rights reserved.
-                   </div>
-                   <div className="text-sm text-gray-400 mt-2 md:mt-0">
-                     <strong>Disclaimer:</strong> This tool is for educational and research purposes only. 
-                     Always consult healthcare professionals for medical decisions.
-                   </div>
-                 </div>
-               </div>
-             </footer>
-           </div>
-         );
-       };
-       
-       // ReactDOM.render(<EnhancedClinicalDecisionApp />, document.getElementById('root'));
-       // Use React 18 createRoot API
-       const root = ReactDOM.createRoot(document.getElementById('root'));
-       root.render(<EnhancedClinicalDecisionApp />);
-   </script>
+                                </div>
+                                
+                                <div>
+                                    <h4 className="text-lg font-semibold mb-4">Enhanced Features</h4>
+                                    <ul className="space-y-2 text-sm text-gray-300">
+                                        <li>• Clinical Intelligence Engine</li>
+                                        <li>• HPO Ontology Integration</li>
+                                        <li>• Statistical Treatment Modeling</li>
+                                        <li>• Comprehensive Cost Analysis</li>
+                                        <li>• Evidence-Based Recommendations</li>
+                                    </ul>
+                                </div>
+                                
+                                <div>
+                                    <h4 className="text-lg font-semibold mb-4">Resources</h4>
+                                    <ul className="space-y-2 text-sm">
+                                        <li>
+                                            <a href="https://www.socr.umich.edu/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                                SOCR Main Site
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="https://hpo.jax.org/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                                HPO Ontology
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="https://github.com/SOCR" className="text-blue-400 hover:text-blue-300 transition-colors">
+                                                GitHub Repository
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div className="border-t border-gray-700 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
+                                <div className="text-sm text-gray-400">
+                                    © 2025 SOCR - University of Michigan. Enhanced Clinical AI (Gen-1)
+                                </div>
+                                <div className="text-sm text-gray-400 mt-2 md:mt-0">
+                                    <strong>Clinical Disclaimer:</strong> For educational and research purposes only. Always consult healthcare professionals.
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
 
-                             <!-- Start of StatCounter Code -->
-		<!-- 
-		<script type="text/javascript">
-			var sc_project=5714596; 
-			var sc_invisible=1; 
-			var sc_partition=71; 
-			var sc_click_stat=1; 
-			var sc_security="038e9ac4"; 
-		</script>
-		
-		<script type="text/javascript" src="http://www.statcounter.com/counter/counter.js"></script>
-		-->
-		
-		<script type="text/javascript">
-			var sc_project = 5714596;
-			var sc_invisible = 1;
-			var sc_security = "038e9ac4";
-			var scJsHost = (("https:" == document.location.protocol) ? "https://secure."
-					: "https://www.");
-			document
-					.write("<sc"+"ript type='text/javascript' src='" +
-			scJsHost+
-			"statcounter.com/counter/counter.js'></"+"script>");
-		</script>
-		<noscript>
-			<div class="statcounter">
-				<a title="web analytics" href="https://statcounter.com/"
-					target="_blank"><img class="statcounter"
-					src="//c.statcounter.com/5714596/0/038e9ac4/1/"
-					alt="web
-			analytics"></a>
-			</div>
-		</noscript>
-	<!-- End of StatCounter Code -->
-	
-	<!-- GoogleAnalytics -->
-		<script src="https://www.google-analytics.com/urchin.js" type="text/javascript"> </script>
-		<script type="text/javascript"> _uacct = "UA-676559-1"; urchinTracker(); </script>
-		
-		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-69710121-1"></script>
-		<script>
-		  window.dataLayer = window.dataLayer || [];
-		  function gtag(){dataLayer.push(arguments);}
-		  gtag('js', new Date());
-		
-		  gtag('config', 'UA-69710121-1');
-		</script>
-	<!-- End of GoogleAnalytics Code -->
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ImprovedClinicalApp />);
+    </script>
+
+    <!-- Start of StatCounter Code -->
+    <script type="text/javascript">
+        var sc_project = 5714596;
+        var sc_invisible = 1;
+        var sc_security = "038e9ac4";
+        var scJsHost = (("https:" == document.location.protocol) ? "https://secure."
+                : "https://www.");
+        document
+                .write("<sc"+"ript type='text/javascript' src='" +
+        scJsHost+
+        "statcounter.com/counter/counter.js'></"+"script>");
+    </script>
+    <noscript>
+        <div class="statcounter">
+            <a title="web analytics" href="https://statcounter.com/"
+                target="_blank"><img class="statcounter"
+                src="//c.statcounter.com/5714596/0/038e9ac4/1/"
+                alt="web analytics"></a>
+        </div>
+    </noscript>
+    <!-- End of StatCounter Code -->
+
+    <!-- GoogleAnalytics -->
+    <script src="https://www.google-analytics.com/urchin.js" type="text/javascript"> </script>
+    <script type="text/javascript"> _uacct = "UA-676559-1"; urchinTracker(); </script>
+    
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-69710121-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-69710121-1');
+    </script>
+    <!-- End of GoogleAnalytics Code -->
 
 </body>
 </html>

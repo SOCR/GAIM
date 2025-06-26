@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Core Clinical Embeddings Precomputer</title>
+    
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.15.0/dist/tf-backend-webgl.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder@1.3.3/dist/universal-sentence-encoder.min.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 20px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .worker-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .worker-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+        }
+        .worker-active {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .worker-progress {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .worker-progress-fill {
+            height: 100%;
+            background: #28a745;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        .multicore-info {
+            background: #e8f5e8;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Multi-Core Clinical Embeddings Precomputer</h1>
+        <p>This tool uses parallel processing with Web Workers to maximize CPU utilization and dramatically reduce processing time.</p>
+        
+        <div class="multicore-info">
+            <h3>🔧 Multi-Core Processing Status</h3>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="detectedCores">0</div>
+                    <div class="stat-label">Detected Cores</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="workerCount">0</div>
+                    <div class="stat-label">Active Workers</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="parallelEfficiency">0%</div>
+                    <div class="stat-label">Parallel Efficiency</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="speedupFactor">1.0x</div>
+                    <div class="stat-label">Expected Speedup</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Resource Warning:</strong> This parallel processing approach will utilize ~80% of your CPU cores 
+            for maximum performance. Ensure adequate cooling and power supply. Processing time reduced from hours to ~30-90 minutes.
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="totalTerms">0</div>
+                <div class="stat-label">Total Terms</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="processedTerms">0</div>
+                <div class="stat-label">Processed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="batchSize">50</div>
+                <div class="stat-label">Batch Size per Worker</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="estimatedTime">--</div>
+                <div class="stat-label">Est. Time Left</div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div id="progressText">Ready to start multi-core processing</div>
+
+        <div id="workerStatus" class="worker-status"></div>
+
+        <div>
+            <button id="startBtn" onclick="startEmbeddingProcessing()">🚀 Start Multi-Core Processing</button>
+            <button id="pauseBtn" onclick="pauseEmbeddingProcessing()" disabled>⏸️ Pause All Workers</button>
+            <button id="resumeBtn" onclick="resumeEmbeddingProcessing()" disabled>▶️ Resume Processing</button>
+            <button id="exportBtn" onclick="exportEmbeddingResults()" disabled>📥 Export Embeddings</button>
+            <button id="testBtn" onclick="testEmbeddingResults()" disabled>🧪 Test Embeddings</button>
+            <button id="benchmarkBtn" onclick="runPerformanceBenchmark()">📊 Benchmark Performance</button>
+        </div>
+
+        <div class="log" id="logOutput"></div>
+    </div>
+
+<script>
+// Multi-Core Clinical Embedding Precomputer
+class MultiCoreClinicalEmbeddingPrecomputer {
+    constructor() {
+        this.useModel = null;
+        this.hpoData = null;
+        this.biomedicalKB = null;
+        this.clinicalTexts = [];
+        this.clinicalLabels = [];
+        this.embeddings = [];
+        this.processedCount = 0;
+        this.totalCount = 0;
+        this.batchSize = 25;
+        this.isPaused = false;
+        this.startTime = null;
+        this.isProcessing = false;
+        
+        // Multi-core properties
+        this.workers = [];
+        this.workerCount = 0;
+        this.detectedCores = this.detectCPUCores();
+        this.workQueue = [];
+        this.completedBatches = [];
+        this.workerStats = [];
+        
+        // this.initializeWorkerCount();
+        this.initializeWorkerCount();
+        this.initialized = false;  
+
+        this.updateCoreDisplay();
+    }
+
+    detectCPUCores() {
+        let cores = navigator.hardwareConcurrency || 4;
+        
+        if (window.performance && window.performance.memory) {
+            const memoryGB = window.performance.memory.usedJSHeapSize / (1024 * 1024 * 1024);
+            if (memoryGB > 8) cores = Math.max(cores, 8);
+            if (memoryGB > 16) cores = Math.max(cores, 12);
+        }
+        
+        this.log(`🔍 Detected ${cores} CPU cores`);
+        return cores;
+    }
+
+    initializeWorkerCount() {
+        // Use more conservative worker count: 60% of cores, max 8 workers
+        this.workerCount = Math.max(2, Math.min(8, Math.floor(this.detectedCores * 0.6)));
+        this.log(`⚙️ Will use ${this.workerCount} workers (60% of ${this.detectedCores} cores, max 8)`);
+        
+        const parallelEfficiency = Math.min(0.90, 0.75 + (this.workerCount - 1) * 0.02);
+        const speedupFactor = this.workerCount * parallelEfficiency;
+        
+        document.getElementById('parallelEfficiency').textContent = `${(parallelEfficiency * 100).toFixed(1)}%`;
+        document.getElementById('speedupFactor').textContent = `${speedupFactor.toFixed(1)}x`;
+    }
+
+    updateCoreDisplay() {
+        document.getElementById('detectedCores').textContent = this.detectedCores;
+        document.getElementById('workerCount').textContent = this.workerCount;
+        this.updateWorkerStatusDisplay();
+    }
+
+    updateWorkerStatusDisplay() {
+        const statusContainer = document.getElementById('workerStatus');
+        statusContainer.innerHTML = '';
+        
+        for (let i = 0; i < this.workerCount; i++) {
+            const workerCard = document.createElement('div');
+            workerCard.className = 'worker-card';
+            workerCard.id = `worker-card-${i}`;
+            
+            const workerStats = this.workerStats[i] || { processed: 0, total: 0, status: 'idle' };
+            const progress = workerStats.total > 0 ? (workerStats.processed / workerStats.total) * 100 : 0;
+            
+            workerCard.innerHTML = `
+                <div><strong>Worker ${i + 1}</strong></div>
+                <div>Status: <span class="worker-status-text">${workerStats.status}</span></div>
+                <div class="worker-progress">
+                    <div class="worker-progress-fill" style="width: ${progress}%"></div>
+                </div>
+                <div>${workerStats.processed}/${workerStats.total} batches</div>
+            `;
+            
+            if (workerStats.status === 'processing') {
+                workerCard.classList.add('worker-active');
+            }
+            
+            statusContainer.appendChild(workerCard);
+        }
+    }
+
+    createWorker(workerId) {
+        this.log(`🔧 Creating minimal worker ${workerId + 1} for testing...`);
+        
+        //const workerCode = `
+        	const workerCode = `
+        	    importScripts(
+        	        'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js',
+        	        'https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder@1.3.3/dist/universal-sentence-encoder.min.js'
+        	    );
+        	 
+        	    let model = null;
+        	 
+        	    async function loadModel () {
+        	        try {
+        	            await tf.setBackend('webgl').catch(() => tf.setBackend('cpu'));
+        	            await tf.ready();
+        	            model = await use.load();
+        	        } catch (err) {
+        	            self.postMessage({ type: 'error', workerId: ${workerId}, error: err.message });
+        	        }
+        	    }
+        	 
+        	    self.addEventListener('message', async e => {
+        	        const { type, texts, batchId } = e.data;
+        	 
+        	        switch (type) {
+        	            case 'init':
+        	                await loadModel();
+        	                self.postMessage({ type: 'ready', workerId: ${workerId}, backend: tf.getBackend() });
+        	                break;
+        	 
+        	            case 'processBatch':
+        	                try {
+        	                    const emb = await model.embed(texts);
+        	                    const arr = await emb.array();
+        	                    emb.dispose();
+        	 
+        	                    self.postMessage({
+        	                        type: 'batchComplete',
+        	                        workerId: ${workerId},
+        	                        batchId,
+        	                        embeddings: arr,
+        	                        processedCount: texts.length,
+        	                        memory: tf.memory()
+        	                    });
+        	                } catch (err) {
+        	                    self.postMessage({
+        	                        type: 'batchError',
+        	                        workerId: ${workerId},
+        	                        batchId,
+        	                        error: err.message
+        	                    });
+        	                }
+        	                break;
+        	 
+        	            case 'test':
+        	                self.postMessage({ type: 'test_response', workerId: ${workerId}, message: 'pong' });
+        	                break;
+        	        }
+        	    });
+        	`;
+        
+        try {
+            this.log(`📝 Creating blob for worker ${workerId + 1}...`);
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            
+            this.log(`🌐 Creating worker URL for worker ${workerId + 1}...`);
+            const workerUrl = URL.createObjectURL(blob);
+            
+            this.log(`👷 Creating Worker instance for worker ${workerId + 1}...`);
+            const worker = new Worker(workerUrl);
+            
+            this.log(`🔗 Setting up message handler for worker ${workerId + 1}...`);
+            worker.onmessage = (e) => {
+                this.log(`📨 Received message from worker ${workerId + 1}: ${e.data.type}`);
+                this.handleWorkerMessage(e.data);
+            };
+            
+            worker.onerror = (error) => {
+                this.log(`❌ Worker ${workerId + 1} error: ${error.message}`);
+                console.error('Worker error details:', error);
+            };
+            
+            this.log(`✅ Worker ${workerId + 1} setup complete`);
+            return worker;
+            
+        } catch (error) {
+            this.log(`❌ Failed to create worker ${workerId + 1}: ${error.message}`);
+            console.error('Worker creation error:', error);
+            throw error;
+        }
+    }
+    
+
+    handleWorkerMessage(data) {
+        const { type, workerId, batchId, embeddings, processedCount, error, status, message } = data;
+        
+        switch (type) {
+            case 'status':
+                this.log(`🔄 Worker ${workerId + 1}: ${message}`);
+                this.workerStats[workerId] = { ...this.workerStats[workerId], status: status };
+                this.updateWorkerStatusDisplay();
+                break;
+                
+            case 'ready':
+                this.log(`✅ Worker ${workerId + 1} ready (Backend: ${data.backend})`);
+                this.workerStats[workerId] = { ...this.workerStats[workerId], status: 'ready' };
+                this.updateWorkerStatusDisplay();
+                // this.checkAllWorkersReady();
+                // *** 2. when a worker becomes ready DURING a job, give it work immediately ***
+                if (this.isProcessing && !this.isPaused) {
+                    // Processing is already under way: give the newcomer work immediately
+                    this.assignWorkToAllReadyWorkers();
+                } else {
+                    // We are still in the initial warm‑up phase
+                    this.checkAllWorkersReady();
+                }
+                break;
+                
+            case 'pong':
+                this.log(`📡 Worker ${workerId + 1} responded to ping (Ready: ${data.ready})`);
+                break;
+                
+            case 'batchComplete':
+                this.handleBatchComplete(workerId, batchId, embeddings, processedCount);
+                if (data.memory && data.memory.numTensors > 50) {
+                    this.log(`⚠️ Worker ${workerId + 1} memory: ${data.memory.numTensors} tensors`);
+                }
+                break;
+                
+            case 'batchError':
+                this.log(`❌ Worker ${workerId + 1} batch ${batchId} error: ${error}`);
+                console.error('Batch error details:', data);
+                this.workerStats[workerId].status = 'error';
+                this.updateWorkerStatusDisplay();
+                break;
+                
+            case 'error':
+                this.log(`❌ Worker ${workerId + 1} initialization error: ${error}`);
+                console.error('Worker initialization error:', data);
+                this.workerStats[workerId].status = 'failed';
+                this.updateWorkerStatusDisplay();
+                break;
+                
+            case 'workerError':
+                this.log(`❌ Worker ${workerId + 1} runtime error: ${error}`);
+                console.error('Worker runtime error:', data);
+                break;
+                
+            case 'worker_alive':
+                this.log(`🎯 Worker ${workerId + 1} is alive: ${data.message}`);
+                break;
+                
+            case 'test_response':
+                this.log(`✅ Worker ${workerId + 1} test successful: ${data.message}`);
+                break;
+        }
+    }
+
+    handleBatchComplete(workerId, batchId, embeddings, processedCount) {
+        this.completedBatches[batchId] = embeddings;
+        this.processedCount += processedCount;
+        
+        this.workerStats[workerId].processed++;
+        this.workerStats[workerId].status = 'ready';
+        
+        this.updateProgress();
+        this.updateWorkerStatusDisplay();
+        
+        this.log(`✅ Worker ${workerId + 1} completed batch ${batchId}`);
+        
+        this.assignNextBatch(workerId);
+        
+        if (this.processedCount >= this.totalCount) {
+            this.consolidateEmbeddings();
+        }
+    }
+
+    assignNextBatch(workerId) {
+        if (this.workQueue.length === 0 || this.isPaused) {
+            this.workerStats[workerId].status = 'idle';
+            this.updateWorkerStatusDisplay();
+            return;
+        }
+        
+        const batch = this.workQueue.shift();
+        this.workerStats[workerId].status = 'processing';
+        this.updateWorkerStatusDisplay();
+        
+        this.workers[workerId].postMessage({
+            type: 'processBatch',
+            texts: batch.texts,
+            batchId: batch.id
+        });
+    }
+    
+    /** Give one batch to every worker that is idle *right now*. */
+    assignWorkToAllReadyWorkers() {
+        for (let i = 0; i < this.workerCount && this.workQueue.length > 0; i++) {
+             if (this.workerStats[i].status === 'ready') {
+                this.assignNextBatch(i);
+             }
+        }
+    }
+
+    log(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logElement = document.getElementById('logOutput');
+        logElement.innerHTML += `[${timestamp}] ${message}\n`;
+        logElement.scrollTop = logElement.scrollHeight;
+        console.log(message);
+    }
+
+    updateProgress() {
+        const percentage = this.totalCount > 0 ? (this.processedCount / this.totalCount) * 100 : 0;
+        document.getElementById('progressBar').style.width = `${percentage}%`;
+        document.getElementById('progressText').textContent = 
+            `Multi-core progress: ${this.processedCount}/${this.totalCount} (${percentage.toFixed(1)}%)`;
+        
+        document.getElementById('totalTerms').textContent = this.totalCount.toLocaleString();
+        document.getElementById('processedTerms').textContent = this.processedCount.toLocaleString();
+
+        if (this.startTime && this.processedCount > 0) {
+            const elapsed = (Date.now() - this.startTime) / 1000;
+            const rate = this.processedCount / elapsed;
+            const remaining = (this.totalCount - this.processedCount) / rate;
+            
+            if (remaining > 3600) {
+                document.getElementById('estimatedTime').textContent = `${(remaining / 3600).toFixed(1)}h`;
+            } else if (remaining > 60) {
+                document.getElementById('estimatedTime').textContent = `${(remaining / 60).toFixed(0)}m`;
+            } else {
+                document.getElementById('estimatedTime').textContent = `${remaining.toFixed(0)}s`;
+            }
+        }
+    }
+
+    // Add this as the first thing in initialize():
+    async initialize() {
+    	if (this.initialized) return true;
+    	
+    	try {
+            this.log('🚀 Starting initialization...');
+            
+            // Check browser compatibility
+            if (typeof Worker === 'undefined') {
+                this.log('❌ Web Workers not supported in this browser');
+                await this.initializeFallbackMode();
+                return true;
+            }
+            
+            if (typeof Blob === 'undefined') {
+                this.log('❌ Blob not supported in this browser');
+                await this.initializeFallbackMode();
+                return true;
+            }
+            
+            this.log('✅ Browser compatibility check passed');
+            
+            this.log('🚀 Initializing Multi-Core Precomputer...');
+            
+            const originalConsoleWarn = console.warn;
+            console.warn = function(...args) {
+                const message = args.join(' ');
+                if (message.includes('already registered') || message.includes('kernel')) {
+                    return;
+                }
+                originalConsoleWarn.apply(console, args);
+            };
+            
+            try {
+                await tf.setBackend('webgl');
+                await tf.ready();
+                this.log(`✅ Main thread backend: ${tf.getBackend()}`);
+            } catch (error) {
+                this.log(`⚠️ WebGL not available, using CPU: ${error.message}`);
+                await tf.setBackend('cpu');
+                await tf.ready();
+            }
+
+            await this.loadKnowledgeBases();
+            this.extractClinicalTexts();
+            // await this.initializeWorkers();
+
+			try {
+    			await this.initializeWorkers();
+    
+    			// Wait up to 20 seconds for at least one worker
+    			let waitTime = 0;
+    			while (waitTime < 20000) {
+    				const readyWorkers = this.workerStats.filter(stat => stat.status === 'ready').length;
+    				if (readyWorkers > 0) {
+    					break;
+    					}
+    				await new Promise(resolve => setTimeout(resolve, 1000));
+    				waitTime += 1000;
+    				this.log(`⏳ Waiting for workers... (${waitTime/1000}s)`);
+    			}
+    
+    			const readyWorkers = this.workerStats.filter(stat => stat.status === 'ready').length;
+    			if (readyWorkers === 0) {
+        			this.log('⚠️ No workers ready, switching to fallback mode...');
+        			await this.initializeFallbackMode();
+    			} else {
+        			this.log(`✅ ${readyWorkers} workers ready for multi-core processing`);
+    			}
+			} catch (error) {
+    		this.log(`❌ Worker initialization failed: ${error.message}`);
+    		this.log('🔄 Attempting fallback mode...');
+    		await this.initializeFallbackMode();
+			}
+            
+            this.log(`🎯 Ready for processing ${this.totalCount} terms`);
+            
+            this.initialized = true;
+            
+            return true;
+        } catch (error) {
+            this.log(`❌ Initialization error: ${error.message}`);
+            return false;
+        }
+    }
+
+    async initializeWorkers() {
+        this.log(`🔧 Creating ${this.workerCount} Web Workers...`);
+        
+        this.log(`🚀 Starting to create ${this.workerCount} workers...`);
+
+        for (let i = 0; i < this.workerCount; i++) {
+            try {
+                this.log(`🔄 Creating worker ${i + 1}/${this.workerCount}...`);
+                
+                // Check if Web Workers are supported
+                if (typeof Worker === 'undefined') {
+                    throw new Error('Web Workers not supported in this browser');
+                }
+                
+                const worker = this.createWorker(i);
+                this.log(`✅ Worker ${i + 1} created, adding to array...`);
+                this.workers.push(worker);
+                this.workerStats.push({ processed: 0, total: 0, status: 'creating' });
+                
+                // Test worker immediately
+                this.log(`🔄 Testing worker ${i + 1} responsiveness...`);
+                
+                // Send init message with timeout
+                worker.postMessage({ type: 'init' });
+                
+                this.log(`📤 Sent init message to worker ${i + 1}`);
+
+             	// Test if worker can respond immediately
+             	setTimeout(() => {
+                 	worker.postMessage({ type: 'test' });
+                 	this.log(`📤 Sent test message to worker ${i + 1}`);
+             	}, 500);
+                
+                // Set individual worker timeout
+                setTimeout(() => {
+                    if (this.workerStats[i].status === 'creating' || this.workerStats[i].status === 'initializing') {
+                        this.log(`❌ Worker ${i + 1} failed to initialize within 15 seconds`);
+                        this.workerStats[i].status = 'timeout';
+                        this.updateWorkerStatusDisplay();
+                    }
+                }, 15000);
+                
+                // Longer delay between worker creation
+                if (i < this.workerCount - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            } catch (error) {
+                this.log(`❌ Failed to create worker ${i + 1}: ${error.message}`);
+                this.workerStats.push({ processed: 0, total: 0, status: 'failed' });
+            }
+        }
+        
+        this.updateWorkerStatusDisplay();
+        
+        // Set timeout for worker initialization
+        setTimeout(() => {
+            //const readyWorkers = this.workerStats.filter(stat => stat.status === 'ready').length;
+            const readyWorkers = this.workerStats.filter(
+            		stat => stat.status === 'ready' || stat.status === 'processing'
+            	  ).length;
+            if (readyWorkers < this.workerCount) {
+                this.log(`⚠️ Only ${readyWorkers}/${this.workerCount} workers ready after 30s. You can still proceed with available workers.`);
+                if (readyWorkers >= 2) {
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('startBtn').textContent = `🚀 Start with ${readyWorkers} Workers`;
+                }
+            }
+        }, 30000);
+    }
+    
+    async initializeFallbackMode() {
+        this.log('🔄 Initializing fallback single-threaded mode...');
+        
+        try {
+            // Load USE model in main thread
+            if (!this.useModel) {
+                this.log('📥 Loading Universal Sentence Encoder in main thread...');
+                this.useModel = await use.load();
+                this.log('✅ USE model loaded in main thread');
+            }
+            
+            // Create fake "worker" stats for single-threaded processing
+            this.workerCount = 1;
+            this.workerStats = [{ processed: 0, total: 0, status: 'ready' }];
+            this.updateWorkerStatusDisplay();
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').textContent = '🚀 Start Single-Threaded Processing';
+            
+            this.log('✅ Fallback mode ready - will process without workers');
+            return true;
+        } catch (error) {
+            this.log(`❌ Fallback mode failed: ${error.message}`);
+            return false;
+        }
+    }
+
+    checkAllWorkersReady() {
+        const readyWorkers = this.workerStats.filter(stat => stat.status === 'ready').length;
+        if (readyWorkers === this.workerCount) {
+            this.log(`🎉 All ${this.workerCount} workers ready!`);
+            document.getElementById('startBtn').disabled = false;
+        }
+    }
+
+    createWorkQueue() {
+        this.workQueue = [];
+        this.completedBatches = new Array(Math.ceil(this.totalCount / this.batchSize));
+        
+        let batchId = 0;
+        for (let i = 0; i < this.totalCount; i += this.batchSize) {
+            const batchTexts = this.clinicalTexts.slice(i, i + this.batchSize);
+            this.workQueue.push({
+                id: batchId,
+                texts: batchTexts,
+                startIndex: i
+            });
+            batchId++;
+        }
+        
+        const batchesPerWorker = Math.ceil(this.workQueue.length / this.workerCount);
+        this.workerStats.forEach(stat => {
+            stat.total = batchesPerWorker;
+            stat.processed = 0;
+        });
+        
+        this.log(`📦 Created ${this.workQueue.length} batches`);
+    }
+
+    async startMultiCoreProcessing() {
+    	// Add this at the very beginning of startMultiCoreProcessing():
+    	// Check if we're in fallback mode
+    	if (this.workerCount === 1 && this.useModel) {
+    	    this.log('🔄 Starting single-threaded fallback processing...');
+    	    await this.processSingleThreaded();
+    	    return;
+    	}
+    	
+    	const readyWorkers = this.workerStats.filter(stat => stat.status === 'ready').length;
+        
+        if (readyWorkers === 0) {
+            this.log('❌ No workers are ready. Please wait for initialization or refresh the page.');
+            return;
+        }
+        
+        if (readyWorkers < this.workerCount) {
+            this.log(`⚠️ Only ${readyWorkers}/${this.workerCount} workers ready. Proceeding with available workers.`);
+            // Update worker count to actual ready workers
+            // this.workerCount = readyWorkers;
+        }
+        
+        this.isProcessing = true;
+        this.isPaused = false;
+        this.startTime = Date.now();
+        this.processedCount = 0;
+        
+        this.createWorkQueue();
+        
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('pauseBtn').disabled = false;
+        document.getElementById('resumeBtn').disabled = true;
+        
+        this.log(`🚀 Starting processing with ${readyWorkers} workers...`);
+        
+        // Assign batches only to ready workers
+        let assignedWorkers = 0;
+        // for (let i = 0; i < this.workers.length && assignedWorkers < readyWorkers && assignedWorkers < this.workQueue.length; i++) {
+        // *** 1. assign work to every ready worker, no cap ***
+        // for (let i = 0; i < this.workers.length && this.workQueue.length > 0; i++) {
+        //    if (this.workerStats[i].status === 'ready') {
+        //        this.assignNextBatch(i);
+        //        assignedWorkers++;
+        //    }
+        // }
+        // Hand a batch to every idle‑and‑ready worker
+        this.assignWorkToAllReadyWorkers();
+    }
+         
+    // Add this new function:
+    async processSingleThreaded() {
+        this.isProcessing = true;
+        this.startTime = Date.now();
+        this.processedCount = 0;
+        
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('pauseBtn').disabled = false;
+        
+        this.log(`🔄 Processing ${this.totalCount} texts in single-threaded mode...`);
+        
+        const batchSize = 10; // Smaller batches for main thread
+        this.embeddings = [];
+        
+        for (let i = 0; i < this.totalCount; i += batchSize) {
+            if (this.isPaused) break;
+            
+            const batch = this.clinicalTexts.slice(i, i + batchSize);
+            const embeddings = await this.useModel.embed(batch);
+            const embeddingArray = await embeddings.array();
+            this.embeddings.push(...embeddingArray);
+            embeddings.dispose();
+            
+            this.processedCount += batch.length;
+            this.updateProgress();
+            
+            // Small delay to prevent UI freezing
+            await new Promise(resolve => setTimeout(resolve, 10));
+            
+            if (i % 100 === 0) {
+                this.log(`📊 Processed ${this.processedCount}/${this.totalCount} texts...`);
+            }
+        }
+        
+        if (!this.isPaused) {
+            this.completeProcessing();
+        }
+    }
+
+    consolidateEmbeddings() {
+        this.log('🔄 Consolidating embeddings...');
+        
+        this.embeddings = [];
+        for (let i = 0; i < this.completedBatches.length; i++) {
+            if (this.completedBatches[i]) {
+                this.embeddings.push(...this.completedBatches[i]);
+            }
+        }
+        
+        this.completeProcessing();
+    }
+
+    completeProcessing() {
+        this.isProcessing = false;
+        const endTime = Date.now();
+        const totalTime = (endTime - this.startTime) / 1000;
+        const expectedSequentialTime = totalTime * this.workerCount * 0.8;
+        const actualSpeedup = expectedSequentialTime / totalTime;
+        
+        this.log(`🎉 Processing complete!`);
+        this.log(`⏱️ Total time: ${(totalTime / 60).toFixed(1)} minutes`);
+        this.log(`🚀 Achieved speedup: ${actualSpeedup.toFixed(1)}x`);
+        this.log(`📊 Processed ${this.embeddings.length} embeddings`);
+        
+        this.workerStats.forEach(stat => {
+            stat.status = 'completed';
+        });
+        this.updateWorkerStatusDisplay();
+        
+        document.getElementById('exportBtn').disabled = false;
+        document.getElementById('testBtn').disabled = false;
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('pauseBtn').disabled = true;
+        document.getElementById('resumeBtn').disabled = true;
+    }
+
+    pauseMultiCoreProcessing() {
+        this.isPaused = true;
+        this.isProcessing = false;
+        
+        this.workerStats.forEach(stat => {
+            if (stat.status === 'processing') {
+                stat.status = 'paused';
+            }
+        });
+        this.updateWorkerStatusDisplay();
+        
+        document.getElementById('pauseBtn').disabled = true;
+        document.getElementById('resumeBtn').disabled = false;
+        document.getElementById('startBtn').disabled = false;
+        
+        this.log('⏸️ Processing paused');
+    }
+
+    resumeMultiCoreProcessing() {
+        this.isPaused = false;
+        this.isProcessing = true;
+        
+        document.getElementById('pauseBtn').disabled = false;
+        document.getElementById('resumeBtn').disabled = true;
+        document.getElementById('startBtn').disabled = true;
+        
+        this.log('▶️ Processing resumed');
+        
+        // resumeMultiCoreProcessing() already loops over workers and calls assignNextBatch()
+        // This loop may be replaced with assignWorkToAllReadyWorkers() -- functionally equivalent
+        for (let i = 0; i < this.workerCount; i++) {
+            if (this.workerStats[i].status === 'paused' || this.workerStats[i].status === 'ready') {
+                this.assignNextBatch(i);
+            }
+        }
+    }
+
+    async loadKnowledgeBases() {
+        try {
+            const hpoResponse = await fetch('assets/hp.json');
+            if (hpoResponse.ok) {
+                this.hpoData = await hpoResponse.json();
+                this.log('📚 HPO data loaded');
+            } else {
+                throw new Error('HPO file not found');
+            }
+        } catch (error) {
+            this.log('⚠️ Using sample HPO data');
+            this.hpoData = this.createSampleHPOData();
+        }
+
+        try {
+            const kbResponse = await fetch('assets/Biomedical_Knowledgebase.txt');
+            if (kbResponse.ok) {
+                const kbText = await kbResponse.text();
+                this.biomedicalKB = await this.parseBiomedicalKB(kbText);
+                this.log('📖 Biomedical KB loaded');
+            } else {
+                throw new Error('Biomedical KB not found');
+            }
+        } catch (error) {
+            this.log('⚠️ Using fallback KB');
+            this.biomedicalKB = this.createFallbackKB();
+        }
+    }
+
+    extractClinicalTexts() {
+        this.clinicalTexts = [];
+        this.clinicalLabels = [];
+
+        if (this.hpoData && this.hpoData.graphs && this.hpoData.graphs[0] && this.hpoData.graphs[0].nodes) {
+            this.hpoData.graphs[0].nodes.forEach((node, index) => {
+                const hpoId = node.id.replace('http://purl.obolibrary.org/obo/', '');
+                const name = node.lbl || node.label || '';
+                const definition = node.meta && node.meta.definition ? node.meta.definition.val : '';
+                const synonyms = node.meta && node.meta.synonyms ? node.meta.synonyms.map(s => s.val) : [];
+                
+                if (name && name.length > 2) {
+                    this.clinicalTexts.push(name);
+                    this.clinicalLabels.push({
+                        type: 'hpo_term',
+                        id: hpoId,
+                        name: name,
+                        definition: definition
+                    });
+                    
+                    if (definition && definition.length > 10) {
+                        this.clinicalTexts.push(definition);
+                        this.clinicalLabels.push({
+                            type: 'hpo_definition',
+                            id: hpoId,
+                            name: name,
+                            definition: definition
+                        });
+                    }
+                    
+                    synonyms.forEach((synonym) => {
+                        if (synonym && synonym.length > 3) {
+                            this.clinicalTexts.push(synonym);
+                            this.clinicalLabels.push({
+                                type: 'hpo_synonym',
+                                id: hpoId,
+                                name: name,
+                                synonym: synonym
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        if (this.biomedicalKB) {
+            if (this.biomedicalKB.conditions) {
+                Object.entries(this.biomedicalKB.conditions).forEach(([id, condition]) => {
+                    if (condition.name) {
+                        this.clinicalTexts.push(condition.name);
+                        this.clinicalLabels.push({
+                            type: 'condition',
+                            id: id,
+                            name: condition.name,
+                            data: condition
+                        });
+                    }
+                });
+            }
+        }
+
+        this.totalCount = this.clinicalTexts.length;
+        this.log(`📊 Extracted ${this.totalCount} clinical texts`);
+    }
+
+    exportEmbeddings() {
+        try {
+            this.log('📦 Preparing embeddings for export...');
+            
+            const exportData = {
+                metadata: {
+                    version: '3.0-multicore-precomputed',
+                    timestamp: new Date().toISOString(),
+                    totalEmbeddings: this.embeddings.length,
+                    embeddingDimension: this.embeddings[0] ? this.embeddings[0].length : 0,
+                    workersUsed: this.workerCount,
+                    detectedCores: this.detectedCores,
+                    processingTime: this.startTime ? (Date.now() - this.startTime) / 1000 : 0
+                },
+                embeddings: this.embeddings,
+                labels: this.clinicalLabels,
+                texts: this.clinicalTexts
+            };
+
+            const jsonString = JSON.stringify(exportData);
+            const sizeInMB = (jsonString.length / 1024 / 1024).toFixed(1);
+            
+            this.log(`📊 Export size: ${sizeInMB} MB`);
+            
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `clinical-embeddings-multicore-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            this.log('✅ Embeddings exported successfully!');
+            
+        } catch (error) {
+            this.log(`❌ Export error: ${error.message}`);
+        }
+    }
+
+    async testEmbeddings() {
+        if (this.embeddings.length === 0) {
+            this.log('❌ No embeddings to test');
+            return;
+        }
+
+        try {
+            this.log('🧪 Testing embeddings...');
+            
+            if (!this.useModel) {
+                this.log('🔄 Loading USE model for testing...');
+                this.useModel = await use.load();
+            }
+            
+            const testQueries = [
+                'severe headache with nausea',
+                'chest pain radiating to arm',
+                'abdominal pain and fever',
+                'shortness of breath'
+            ];
+
+            for (const query of testQueries) {
+                this.log(`🔍 Testing query: "${query}"`);
+                
+                const queryEmbedding = await this.useModel.embed([query]);
+                const queryArray = await queryEmbedding.array();
+                
+                const similarities = [];
+                const testSampleSize = Math.min(this.embeddings.length, 1000);
+                
+                for (let i = 0; i < testSampleSize; i++) {
+                    const similarity = this.cosineSimilarity(queryArray[0], this.embeddings[i]);
+                    if (similarity > 0.3) {
+                        similarities.push({
+                            similarity,
+                            text: this.clinicalTexts[i],
+                            label: this.clinicalLabels[i]
+                        });
+                    }
+                }
+                
+                similarities.sort((a, b) => b.similarity - a.similarity);
+                const topMatches = similarities.slice(0, 3);
+                
+                topMatches.forEach((match, index) => {
+                    this.log(`  ${index + 1}. ${match.text} (${(match.similarity * 100).toFixed(1)}%)`);
+                });
+                
+                queryEmbedding.dispose();
+            }
+            
+            this.log('✅ Embedding test completed!');
+            
+        } catch (error) {
+            this.log(`❌ Test error: ${error.message}`);
+        }
+    }
+
+    cosineSimilarity(a, b) {
+        let dotProduct = 0;
+        let normA = 0;
+        let normB = 0;
+        
+        for (let i = 0; i < a.length; i++) {
+            dotProduct += a[i] * b[i];
+            normA += a[i] * a[i];
+            normB += b[i] * b[i];
+        }
+        
+        if (normA === 0 || normB === 0) return 0;
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
+    async runBenchmark() {
+        this.log('📊 Running benchmark...');
+        
+        const testTexts = [
+            'severe headache with nausea',
+            'chest pain radiating to arm',
+            'abdominal pain and fever',
+            'shortness of breath'
+        ];
+        
+        this.log('🔄 Testing single-threaded performance...');
+        const singleStart = performance.now();
+        
+        if (!this.useModel) {
+            this.useModel = await use.load();
+        }
+        
+        const singleEmbedding = await this.useModel.embed(testTexts);
+        await singleEmbedding.array();
+        singleEmbedding.dispose();
+        
+        const singleTime = performance.now() - singleStart;
+        this.log(`⚡ Single-threaded: ${singleTime.toFixed(1)}ms`);
+        
+        const expectedMultiTime = singleTime / (this.workerCount * 0.8);
+        const theoreticalSpeedup = singleTime / expectedMultiTime;
+        
+        this.log(`🚀 Expected speedup: ${theoreticalSpeedup.toFixed(1)}x`);
+        this.log(`⏱️ Expected time reduction: ${((1 - 1/theoreticalSpeedup) * 100).toFixed(1)}%`);
+    }
+
+    terminateWorkers() {
+        this.log('🛑 Terminating workers...');
+        this.workers.forEach(worker => worker.terminate());
+        this.workers = [];
+        this.workerStats = [];
+        this.updateWorkerStatusDisplay();
+    }
+
+    createSampleHPOData() {
+        return {
+            graphs: [{
+                nodes: [
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0002315",
+                        lbl: "Headache",
+                        meta: {
+                            definition: { val: "Pain in the head or neck region" },
+                            synonyms: [{ val: "Head pain" }, { val: "Cephalgia" }]
+                        }
+                    },
+                    {
+                        id: "http://purl.obolibrary.org/obo/HP_0100749",
+                        lbl: "Chest pain",
+                        meta: {
+                            definition: { val: "Pain in the chest" },
+                            synonyms: [{ val: "Thoracic pain" }]
+                        }
+                    }
+                ]
+            }]
+        };
+    }
+
+    createFallbackKB() {
+        return {
+            conditions: {
+                'migraine': { name: 'Migraine', description: 'Recurrent headache disorder' },
+                'angina': { name: 'Angina', description: 'Chest pain due to reduced cardiac blood flow' }
+            },
+            treatments: {
+                'analgesics': { name: 'Pain Medications' },
+                'supportive_care': { name: 'Supportive Care' }
+            }
+        };
+    }
+
+    async parseBiomedicalKB(text) {
+        const kb = { conditions: {}, treatments: {} };
+        const lines = text.split('\n').slice(0, 2000);
+        
+        lines.forEach(line => {
+            line = line.trim();
+            if (line && line.length > 3) {
+                const id = line.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                kb.conditions[id] = {
+                    name: line,
+                    description: `Medical condition: ${line}`
+                };
+            }
+        });
+        
+        return kb;
+    }
+}
+
+// Global instance and functions
+let multiCorePrecomputer = null;
+
+// Global function declarations
+async function startEmbeddingProcessing() {
+    try {
+    	if (!multiCorePrecomputer)
+    	        multiCorePrecomputer = new MultiCoreClinicalEmbeddingPrecomputer();
+    	
+    	const initialized = await multiCorePrecomputer.initialize();   // always run it
+    	if (!initialized) { alert('Failed to initialize'); return; }
+        
+        // Check workers status
+        console.log('Worker stats:', multiCorePrecomputer.workerStats);
+        console.log('Total workers created:', multiCorePrecomputer.workers.length);
+        
+        // Wait for workers but with better feedback
+        let waitTime = 0;
+        const maxWaitTime = 15000; // Reduced to 15 seconds
+        const checkInterval = 1000;
+        
+        while (waitTime < maxWaitTime) {
+            const readyWorkers = multiCorePrecomputer.workerStats.filter(
+                stat => stat.status === 'ready'
+            ).length;
+            
+            const totalWorkers = multiCorePrecomputer.workerStats.length;
+            console.log(`Workers status check: ${readyWorkers}/${totalWorkers} ready`);
+            
+            // Show detailed status
+            multiCorePrecomputer.workerStats.forEach((stat, i) => {
+                console.log(`Worker ${i + 1}: ${stat.status}`);
+            });
+            
+            if (readyWorkers > 0) {
+                console.log(`✅ ${readyWorkers} workers ready, starting processing...`);
+                break;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, checkInterval));
+            waitTime += checkInterval;
+            console.log(`Waiting for workers... ${waitTime/1000}s`);
+        }
+
+        await multiCorePrecomputer.startMultiCoreProcessing();
+    } catch (error) {
+        console.error('Error starting processing:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+function pauseEmbeddingProcessing() {
+    try {
+        if (multiCorePrecomputer) {
+            multiCorePrecomputer.pauseMultiCoreProcessing();
+        }
+    } catch (error) {
+        console.error('Error pausing:', error);
+    }
+}
+
+function resumeEmbeddingProcessing() {
+    try {
+        if (multiCorePrecomputer) {
+            multiCorePrecomputer.resumeMultiCoreProcessing();
+        }
+    } catch (error) {
+        console.error('Error resuming:', error);
+    }
+}
+
+function exportEmbeddingResults() {
+    try {
+        if (multiCorePrecomputer) {
+            multiCorePrecomputer.exportEmbeddings();
+        } else {
+            alert('No embeddings available. Please run processing first.');
+        }
+    } catch (error) {
+        console.error('Error exporting:', error);
+    }
+}
+
+function testEmbeddingResults() {
+    try {
+        if (multiCorePrecomputer) {
+            multiCorePrecomputer.testEmbeddings();
+        } else {
+            alert('No embeddings available. Please run processing first.');
+        }
+    } catch (error) {
+        console.error('Error testing:', error);
+    }
+}
+
+async function runPerformanceBenchmark() {
+    try {
+        if (!multiCorePrecomputer) {
+            multiCorePrecomputer = new MultiCoreClinicalEmbeddingPrecomputer();
+        }
+        await multiCorePrecomputer.runBenchmark();
+    } catch (error) {
+        console.error('Error running benchmark:', error);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing...');
+    
+    // Create precomputer for display initialization
+    // if (!multiCorePrecomputer) 
+    //    multiCorePrecomputer = new MultiCoreClinicalEmbeddingPrecomputer();
+    
+    console.log('Ready for user interaction');
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (multiCorePrecomputer) {
+        multiCorePrecomputer.terminateWorkers();
+    }
+});
+
+// Error handling
+window.onerror = function(message, source, lineno, colno, error) {
+    console.error('Global error:', { message, source, lineno, colno, error });
+    return false;
+};
+
+window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+});
+</script>
+
+</body>
+</html>
